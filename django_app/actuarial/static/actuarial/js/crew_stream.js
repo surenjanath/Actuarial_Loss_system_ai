@@ -35,6 +35,18 @@
   const pastRunsRefresh = document.getElementById('crew-past-runs-refresh');
   const reviewBanner = document.getElementById('crew-review-banner');
   const pdfDownload = document.getElementById('crew-pdf-download');
+  const findingsStreamEl = document.getElementById('crew-findings-stream');
+  const findingsStatusEl = document.getElementById('crew-findings-status');
+  const boardPreviousEl = document.getElementById('crew-board-report-previous');
+  const snapshotStatusEl = document.getElementById('crew-snapshot-status');
+  const liveBoardStatusEl = document.getElementById('crew-live-board-status');
+  const findingsCol = document.getElementById('crew-findings-col');
+  const snapshotCol = document.getElementById('crew-snapshot-col');
+  const liveCol = document.getElementById('crew-live-col');
+  const trackerPanel = document.getElementById('crew-tracker-panel');
+  const trackerLaneEl = document.getElementById('crew-tracker-lane');
+  const trackerStepLabelEl = document.getElementById('crew-tracker-step-label');
+  const trackerListEl = document.getElementById('crew-tracker-list');
 
   /** CrewAI stream chunks often report task_index 0 for every token; we route by server task_transition instead. */
   let activeStreamTaskIdx = -1;
@@ -60,12 +72,75 @@
   let streamBufLog = '';
   let streamBufUnified = '';
   let streamBufDocs = {};
+  let streamBufFindings = '';
   let streamFlushScheduled = false;
+
+  const BOARD_KINDS = {
+    initial_report: true,
+    executive: true,
+    revision: true,
+    final_report: true,
+  };
+
+  function taskStepKind(taskIdx) {
+    var n = document.querySelector('.crew-org-node[data-task-idx="' + taskIdx + '"]');
+    return n ? String(n.getAttribute('data-step-kind') || '').trim() : '';
+  }
+
+  function isAnalystKind(sk) {
+    return sk === 'reserving' || sk === 'risk';
+  }
+
+  function isBoardKind(sk) {
+    return !!BOARD_KINDS[sk];
+  }
+
+  function getStepTrackerMap() {
+    var el = document.getElementById('crew-step-tracker-data');
+    if (!el || !el.textContent) return {};
+    try {
+      return JSON.parse(el.textContent);
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function setBoardColumnFocus(stepKind) {
+    var sk = String(stepKind || '');
+    if (findingsCol) findingsCol.classList.remove('is-active');
+    if (snapshotCol) snapshotCol.classList.remove('is-active');
+    if (liveCol) liveCol.classList.remove('is-active');
+    if (isAnalystKind(sk) && findingsCol) findingsCol.classList.add('is-active');
+    else if (isBoardKind(sk) && liveCol) liveCol.classList.add('is-active');
+  }
+
+  function updateTracker(payload) {
+    if (!trackerPanel) return;
+    trackerPanel.classList.remove('hidden');
+    var lane = payload.workflow_lane_title || '';
+    var label = (payload.label || '') + (payload.step_kind ? ' · ' + payload.step_kind : '');
+    if (trackerLaneEl) trackerLaneEl.textContent = lane ? 'Lane: ' + lane : '';
+    if (trackerStepLabelEl) trackerStepLabelEl.textContent = label.trim() || '—';
+    var bullets = payload.tracker_bullets;
+    if ((!bullets || !bullets.length) && payload.step_kind) {
+      var map = getStepTrackerMap();
+      bullets = map[payload.step_kind] || [];
+    }
+    if (trackerListEl) {
+      trackerListEl.textContent = '';
+      (bullets || []).forEach(function (b) {
+        var li = document.createElement('li');
+        li.textContent = b;
+        trackerListEl.appendChild(li);
+      });
+    }
+  }
 
   function resetStreamBuffers() {
     streamBufLog = '';
     streamBufUnified = '';
     streamBufDocs = {};
+    streamBufFindings = '';
     streamFlushScheduled = false;
   }
 
@@ -88,6 +163,10 @@
         doc.scrollTop = doc.scrollHeight;
       }
     });
+    if (findingsStreamEl) {
+      findingsStreamEl.textContent = streamBufFindings;
+      findingsStreamEl.scrollTop = findingsStreamEl.scrollHeight;
+    }
   }
 
   function scheduleStreamFlush() {
@@ -214,6 +293,16 @@
     if (approveBtn) approveBtn.disabled = true;
     if (approvalMsg) approvalMsg.textContent = '';
     if (boardReportLive) boardReportLive.textContent = '';
+    if (findingsStreamEl) findingsStreamEl.textContent = '';
+    if (boardPreviousEl) boardPreviousEl.textContent = '';
+    if (findingsStatusEl) findingsStatusEl.textContent = 'Waiting…';
+    if (snapshotStatusEl) snapshotStatusEl.textContent = '—';
+    if (liveBoardStatusEl) liveBoardStatusEl.textContent = '—';
+    if (trackerPanel) trackerPanel.classList.add('hidden');
+    if (trackerLaneEl) trackerLaneEl.textContent = '';
+    if (trackerStepLabelEl) trackerStepLabelEl.textContent = '';
+    if (trackerListEl) trackerListEl.textContent = '';
+    setBoardColumnFocus('');
     if (boardOpenEl) {
       boardOpenEl.classList.add('hidden');
       boardOpenEl.removeAttribute('href');
@@ -240,7 +329,10 @@
     if (boardReportWrap) boardReportWrap.classList.remove('hidden');
     if (boardReportLive && !boardReportLive.textContent) {
       boardReportLive.textContent =
-        '(Waiting for initial report, executive, revision, or audited report steps — the shared board report will stream here.)';
+        '(Next to agents — waiting for a board-stage step: initial report, executive, revision, or audited report.)';
+    }
+    if (liveBoardStatusEl) {
+      liveBoardStatusEl.textContent = 'Waiting for board step…';
     }
   }
 
@@ -517,6 +609,11 @@
       boardReportLive.textContent = payload.content || '';
       boardReportLive.scrollTop = boardReportLive.scrollHeight;
     }
+    if (liveBoardStatusEl) {
+      var ph = payload.phase === 'step_end' ? 'Step complete' : 'Streaming board draft';
+      liveBoardStatusEl.textContent = ph + (payload.step_kind ? ' · ' + payload.step_kind : '');
+    }
+    if (liveCol) liveCol.classList.add('is-active');
     if (boardReportLabel) {
       var phase = payload.phase === 'step_end' ? 'Step complete' : 'Streaming';
       boardReportLabel.textContent =
@@ -550,6 +647,10 @@
     if (boardModel && payload.model) {
       boardModel.textContent = payload.model;
     }
+    if (trackerPanel) trackerPanel.classList.remove('hidden');
+    if (trackerStepLabelEl) trackerStepLabelEl.textContent = 'Run started — waiting for first task…';
+    if (trackerLaneEl) trackerLaneEl.textContent = '';
+    if (trackerListEl) trackerListEl.textContent = '';
     setPipelineAllQueued();
     appendActivity('Run started (model: ' + (payload.model || '') + ')', payload.ts || '');
     if (payload.agents && payload.agents.length) {
@@ -586,9 +687,17 @@
     const phase = payload.phase;
     const label = payload.label || 'Task ' + idx;
     const ts = payload.ts || '';
+    const stepKind = payload.step_kind || taskStepKind(idx);
 
     if (phase === 'start') {
       activeStreamTaskIdx = idx;
+      updateTracker(payload);
+      setBoardColumnFocus(stepKind);
+      if (isAnalystKind(stepKind) && findingsStatusEl) {
+        findingsStatusEl.textContent = 'Streaming…';
+      } else if (findingsStatusEl && streamBufFindings) {
+        findingsStatusEl.textContent = 'Complete';
+      }
       {
         const sep = streamBufUnified ? '\n\n' : '';
         streamBufUnified +=
@@ -624,6 +733,16 @@
         }
       });
     } else if (phase === 'end') {
+      if (isBoardKind(stepKind) && boardReportLive && boardPreviousEl) {
+        var snapText = boardReportLive.textContent || '';
+        if (String(snapText).trim() && !/^\(Next to agents/.test(String(snapText).trim())) {
+          boardPreviousEl.textContent = snapText;
+          if (snapshotStatusEl) snapshotStatusEl.textContent = 'After ' + (stepKind || 'board step');
+        }
+      }
+      if (isAnalystKind(stepKind) && findingsStatusEl) {
+        findingsStatusEl.textContent = 'Complete';
+      }
       appendActivity('← ' + label + ' — finished', ts);
       const node = document.querySelector('.crew-org-node[data-task-idx="' + idx + '"]');
       if (node) {
@@ -652,6 +771,10 @@
     if (bit) {
       streamBufDocs[routeIdx] = (streamBufDocs[routeIdx] || '') + bit;
       streamBufUnified += bit;
+      var skChunk = taskStepKind(routeIdx);
+      if (isAnalystKind(skChunk)) {
+        streamBufFindings += bit;
+      }
       const role = payload.agent_role || '';
       streamBufLog += (streamBufLog ? '\n' : '') + (role ? '[' + role + '] ' : '') + bit;
       scheduleStreamFlush();
@@ -698,7 +821,13 @@
     parts.push('=== Audited report (deliverable) ===');
     parts.push(auditedReportEl ? auditedReportEl.textContent : '');
     parts.push('');
-    parts.push('=== Board report (live panel) ===');
+    parts.push('=== Analyst findings (column A) ===');
+    parts.push(findingsStreamEl ? findingsStreamEl.textContent : '');
+    parts.push('');
+    parts.push('=== Previous board snapshot (column B) ===');
+    parts.push(boardPreviousEl ? boardPreviousEl.textContent : '');
+    parts.push('');
+    parts.push('=== Board report (live — beside crew pipeline) ===');
     parts.push(boardReportLive ? boardReportLive.textContent : '');
     parts.push('');
     parts.push('=== Full transcript (all tasks) ===');

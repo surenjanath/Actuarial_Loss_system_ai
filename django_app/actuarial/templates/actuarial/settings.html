@@ -59,24 +59,29 @@
           <h1 class="settings-panel-title">General</h1>
           <p class="settings-panel-desc">Profile details and application build information.</p>
         </header>
+        <div id="settings-workspace-user-boot" data-url="{% url 'workspace_user_api' %}" hidden></div>
         <div class="card mb-4">
           <h3 class="settings-card-title">Profile</h3>
           <div class="grid-2 gap-3 settings-stack--tight">
             <div>
               <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-name">Full name</label>
-              <input id="set-name" type="text" value="Andrew Sabato" class="input-dark input-muted" autocomplete="name">
+              <input id="set-name" type="text" value="{{ workspace_user.display_name }}" class="input-dark input-muted" autocomplete="name">
             </div>
             <div>
               <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-email">Email</label>
-              <input id="set-email" type="email" value="andrew.sabato@company.com" class="input-dark input-muted" autocomplete="email">
+              <input id="set-email" type="email" value="{{ workspace_user.email }}" class="input-dark input-muted" autocomplete="email">
             </div>
             <div>
               <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-role">Role</label>
-              <input id="set-role" type="text" value="Chief Actuary" class="input-dark input-muted">
+              <input id="set-role" type="text" value="{{ workspace_user.role }}" class="input-dark input-muted">
             </div>
             <div>
               <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-dept">Department</label>
-              <input id="set-dept" type="text" value="Analytics" class="input-dark input-muted">
+              <input id="set-dept" type="text" value="{{ workspace_user.department }}" class="input-dark input-muted">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-avatar">Avatar initials</label>
+              <input id="set-avatar" type="text" value="{{ workspace_user.avatar_initials }}" class="input-dark input-muted" maxlength="3" autocomplete="off" placeholder="e.g. AS">
             </div>
           </div>
         </div>

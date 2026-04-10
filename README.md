@@ -1,4 +1,40 @@
-# Actuarial Loss Dashboard (Django)
+# Claims Determination — Actuarial Loss Dashboard
+
+A **Django** web app for actuarial-style loss analytics: interactive **Dashboard**, **Database** table, **Statistics** charts, and an **AI crew** pipeline (CrewAI + local **Ollama**) for multi-agent analysis, streaming runs, approvals, and PDF reports. The UI is server-rendered with client-side charts and live crew streaming.
+
+## Demo
+
+**Video preview** (click the image to open the walkthrough on YouTube):
+
+<p align="center">
+  <a href="https://youtu.be/nuNXtLAnnLE" title="Watch the demo on YouTube">
+    <img src="https://img.youtube.com/vi/nuNXtLAnnLE/maxresdefault.jpg" alt="YouTube video preview — Claims Determination / Actuarial Loss Dashboard walkthrough" width="800" />
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=nuNXtLAnnLE"><strong>▶ Watch on YouTube</strong></a>
+</p>
+
+## Screenshots
+
+| Sign in | Dashboard |
+|--------|-----------|
+| ![Sign in](screenshot/login.png) | ![Dashboard](screenshot/dashboard.png) |
+
+| Statistics | AI agents (roster) |
+|------------|-------------------|
+| ![Statistics](screenshot/statistics.png) | ![AI agents](screenshot/ai_agents.png) |
+
+| AI agents — setup | AI analysis (crew run) |
+|-------------------|-------------------------|
+| ![AI agents setup](screenshot/ai_agents_setup.png) | ![AI analysis](screenshot/ai_analysis.png) |
+
+| Settings |
+|----------|
+| ![Settings](screenshot/settings.png) |
+
+---
 
 Server-rendered port of the React + Vite dashboard in the parent folder: same screens (Dashboard, Members, Database, Statistics, Settings), mock actuarial data, and client-side charts/particles.
 
@@ -6,17 +42,21 @@ Server-rendered port of the React + Vite dashboard in the parent folder: same sc
 
 - Python 3.10+ recommended
 - pip
+- For AI crew runs: [Ollama](https://ollama.com/) installed and a model pulled (see [CrewAI + Ollama](#crewai--ollama))
 
 ## Setup
 
-From this directory (`django_app/`):
+From the `django_app/` directory:
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python manage.py migrate
+python manage.py createsuperuser
 ```
+
+The app uses **Django authentication**. After starting the server, sign in at **`/accounts/login/`** (or follow the redirect from `/`). Create the initial user with `createsuperuser` if the database is empty.
 
 ## Run
 
@@ -24,7 +64,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-Open **http://127.0.0.1:8000/** for the dashboard. Navigation uses normal links:
+Open **http://127.0.0.1:8000/** after signing in. Navigation uses normal links:
 
 - `/` — Dashboard  
 - `/members/` — Crew agent pipeline (edit steps, roles, models; no live run UI)  
@@ -79,7 +119,7 @@ If Ollama is down or misconfigured, the UI disables the run button and shows a s
 | **`CrewRun` rows (reports, steps, approval)** | **SQLite** (`db.sqlite3`), keyed by **`session_key`** copied from the session | Same **browser session** → same runs when you come back. **Different cookie** (incognito / cleared cookies) → **different `session_key`** → you **do not** see earlier runs |
 | **`OrganizationProfile`** | **Database** singleton | Survives session changes; shared for the app instance |
 
-So you “see the session before” because the **same session cookie** still maps to the same **`session_key`**, and crew history is loaded from the DB with that key. This is not shared across users unless they share a session (there is no login in this app yet).
+So you “see the session before” because the **same session cookie** still maps to the same **`session_key`**, and crew history is loaded from the DB with that key. **Signed-in users** each have their own browser session; crew history is **not** shared across different sessions (and not across different `session_key` values).
 
 ### Approved report PDF (stored on disk)
 

@@ -17,6 +17,7 @@ from typing import Any, Generator, Iterator
 from django.conf import settings
 
 from . import services
+from .crew_config import step_tracker_bullets, workflow_lane_for_step_kind
 from .workspace_state import WORKSPACE_RUN_SCOPE
 from .crew_agents import build_analysis_crew_from_pipeline, chunk_to_event
 from .crew_persistence import (
@@ -48,11 +49,28 @@ def with_ts(ev: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _agent_meta_for_index(idx: int, agents_meta: list[dict[str, Any]]) -> dict[str, Any]:
+def _agent_meta_for_index(
+    idx: int,
+    agents_meta: list[dict[str, Any]],
+    pipeline_rows: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     for a in agents_meta:
         if a['task_index'] == idx:
             return dict(a)
-    return {'id': f'crew-task-{idx}', 'task_index': idx, 'role': '', 'label': f'Task {idx}'}
+    sk = 'generic'
+    if pipeline_rows is not None and 0 <= idx < len(pipeline_rows):
+        sk = _step_kind_at(pipeline_rows, idx) or 'generic'
+    lid, ltitle = workflow_lane_for_step_kind(sk)
+    return {
+        'id': f'crew-task-{idx}',
+        'task_index': idx,
+        'role': '',
+        'label': f'Task {idx}',
+        'step_kind': sk,
+        'workflow_lane': lid,
+        'workflow_lane_title': ltitle,
+        'tracker_bullets': step_tracker_bullets(sk),
+    }
 
 
 def _infer_task_index_from_role_text(
@@ -249,7 +267,7 @@ def _crew_worker(
         if skind not in BOARD_REPORT_STEP_KINDS:
             return
         text = (task_buffers.get(task_idx) or '')[:500000]
-        meta = _agent_meta_for_index(task_idx, agents_meta)
+        meta = _agent_meta_for_index(task_idx, agents_meta, pipeline_rows)
         event_q.put(
             {
                 'type': 'report_draft',
@@ -294,7 +312,7 @@ def _crew_worker(
             ln - last_throttled_len < REPORT_DRAFT_CHAR_LEAP
         ):
             return
-        meta = _agent_meta_for_index(task_idx, agents_meta)
+        meta = _agent_meta_for_index(task_idx, agents_meta, pipeline_rows)
         event_q.put(
             {
                 'type': 'report_draft',
@@ -327,11 +345,13 @@ def _crew_worker(
             task_dataset_text=dataset_summary,
             task_company_text=company_profile_text,
         )
+        agents_payload = [dict(a) for a in agents_meta]
         event_q.put(
             {
                 'type': 'run_start',
                 'model': ollama_model,
-                'agents': [dict(a) for a in agents_meta],
+                'agents': agents_payload,
+                'step_manifest': agents_payload,
                 'run_id': crew_run_id,
             }
         )
@@ -355,7 +375,7 @@ def _crew_worker(
                 idx = _logical_task_index(chunk, last_task_index, agents_meta)
                 if last_task_index is not None and idx != last_task_index:
                     board_finish(last_task_index)
-                    meta = _agent_meta_for_index(last_task_index, agents_meta)
+                    meta = _agent_meta_for_index(last_task_index, agents_meta, pipeline_rows)
                     event_q.put(
                         {
                             'type': 'task_transition',
@@ -364,6 +384,11 @@ def _crew_worker(
                             'label': meta['label'],
                             'role': meta['role'],
                             'id': meta['id'],
+                            'step_kind': meta.get('step_kind')
+                            or _step_kind_at(pipeline_rows, last_task_index),
+                            'workflow_lane': meta.get('workflow_lane'),
+                            'workflow_lane_title': meta.get('workflow_lane_title'),
+                            'tracker_bullets': meta.get('tracker_bullets'),
                         }
                     )
                     if settings.CREW_VERBOSE_LOG:
@@ -371,7 +396,7 @@ def _crew_worker(
                             'Crew task end session=%s task_index=%s', sk, last_task_index
                         )
                 if last_task_index is None or idx != last_task_index:
-                    meta = _agent_meta_for_index(idx, agents_meta)
+                    meta = _agent_meta_for_index(idx, agents_meta, pipeline_rows)
                     event_q.put(
                         {
                             'type': 'task_transition',
@@ -380,6 +405,11 @@ def _crew_worker(
                             'label': meta['label'],
                             'role': meta['role'],
                             'id': meta['id'],
+                            'step_kind': meta.get('step_kind')
+                            or _step_kind_at(pipeline_rows, idx),
+                            'workflow_lane': meta.get('workflow_lane'),
+                            'workflow_lane_title': meta.get('workflow_lane_title'),
+                            'tracker_bullets': meta.get('tracker_bullets'),
                         }
                     )
                     last_task_index = idx
@@ -414,7 +444,7 @@ def _crew_worker(
                 logger.exception('Crew chunk serialize session=%s', sk)
         if last_task_index is not None and not timed_out:
             board_finish(last_task_index)
-            meta = _agent_meta_for_index(last_task_index, agents_meta)
+            meta = _agent_meta_for_index(last_task_index, agents_meta, pipeline_rows)
             event_q.put(
                 {
                     'type': 'task_transition',
@@ -423,6 +453,11 @@ def _crew_worker(
                     'label': meta['label'],
                     'role': meta['role'],
                     'id': meta['id'],
+                    'step_kind': meta.get('step_kind')
+                    or _step_kind_at(pipeline_rows, last_task_index),
+                    'workflow_lane': meta.get('workflow_lane'),
+                    'workflow_lane_title': meta.get('workflow_lane_title'),
+                    'tracker_bullets': meta.get('tracker_bullets'),
                 }
             )
         if not timed_out:

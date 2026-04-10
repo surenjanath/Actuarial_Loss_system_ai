@@ -14,11 +14,11 @@
       <div class="sidebar-inner">
         <div class="sidebar-profile">
           <div class="sidebar-avatar">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Andrew&backgroundColor=333" alt="Profile" width="40" height="40">
+            <img src="{{ workspace_user.avatar_url }}" alt="" width="40" height="40">
           </div>
           <div>
-            <h2 class="sidebar-name">Andrew Sabato</h2>
-            <p class="sidebar-role">Admin</p>
+            <h2 class="sidebar-name">{{ workspace_user.display_name }}</h2>
+            <p class="sidebar-role">{{ workspace_user.role }}</p>
           </div>
         </div>
 
@@ -76,6 +76,12 @@
         <div class="sidebar-footer">
           <span class="sidebar-footer-label">Workspace</span>
           <span class="sidebar-footer-value">Workspace · v1</span>
+          {% if user.is_authenticated %}
+          <form method="post" action="{% url 'logout' %}" class="sidebar-logout-form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm sidebar-logout-btn">Log out</button>
+          </form>
+          {% endif %}
         </div>
       </div>
     </aside>

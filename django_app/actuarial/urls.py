@@ -26,6 +26,11 @@ urlpatterns = [
     ),
     path('api/crew/pipeline/', views.crew_pipeline_api, name='crew_pipeline_api'),
     path('api/settings/company/', views.company_profile_api, name='company_profile_api'),
+    path(
+        'api/settings/workspace-user/',
+        views.workspace_user_api,
+        name='workspace_user_api',
+    ),
     path('api/settings/ollama/', views.save_ollama_settings, name='save_ollama_settings'),
     path(
         'api/settings/ollama/models/',

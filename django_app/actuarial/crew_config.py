@@ -37,6 +37,116 @@ STEP_KIND_CHOICES: list[tuple[str, str, str]] = [
 
 STEP_KINDS_ALLOWED = frozenset(k for k, _, _ in STEP_KIND_CHOICES)
 
+# Analyst-only streamed findings (side pane); must match crew_stream.js if hardcoded there.
+ANALYST_STEP_KINDS = frozenset({'reserving', 'risk'})
+
+# Org-style lane order (tier) for UI grouping.
+WORKFLOW_LANE_ORDER: tuple[str, ...] = (
+    'findings',
+    'board',
+    'review',
+    'approval',
+    'finalize',
+)
+
+# step_kind -> (lane_id, lane_title)
+WORKFLOW_LANE_BY_KIND: dict[str, tuple[str, str]] = {
+    'reserving': ('findings', 'Findings'),
+    'risk': ('findings', 'Findings'),
+    'initial_report': ('board', 'Board draft'),
+    'executive': ('board', 'Board draft'),
+    'manager': ('review', 'Peer review'),
+    'audit': ('review', 'Peer review'),
+    'revision': ('approval', 'Sign-off and corrections'),
+    'ceo': ('approval', 'Sign-off and corrections'),
+    'final_report': ('finalize', 'Deliverable'),
+    'coach': ('finalize', 'Deliverable'),
+    'generic': ('findings', 'Findings'),
+}
+
+
+def workflow_lane_for_step_kind(kind: str) -> tuple[str, str]:
+    """Return (lane_id, lane_title) for org-chart tier grouping."""
+    k = (kind or 'generic').strip().lower() or 'generic'
+    return WORKFLOW_LANE_BY_KIND.get(k, ('findings', 'Findings'))
+
+
+def step_tracker_bullets(kind: str) -> list[str]:
+    """Static role expectations per step (UI checklist; not LLM-judged)."""
+    k = (kind or 'generic').strip().lower() or 'generic'
+    table: dict[str, list[str]] = {
+        'reserving': [
+            'Ground every number in the cohort summary; no invented years or metrics.',
+            'Call out IBNR / development patterns and reserve adequacy signals explicitly.',
+            'Stay concise; numbered findings preferred.',
+        ],
+        'risk': [
+            'Tie trends and drivers to the summary data; avoid speculative figures.',
+            'Flag concentration, deterioration, or volatility with conservative wording.',
+            'Separate facts from interpretation.',
+        ],
+        'initial_report': [
+            'Build the leadership draft only from analyst outputs + cohort summary for numbers.',
+            'Use board-paper structure cues (title, exec snapshot, sections).',
+            'Do not resolve manager/audit comments yet—later steps will refine.',
+        ],
+        'executive': [
+            'Synthesize for leadership: implications, actions, caveats (mock-data caveat if applicable).',
+            'Keep tone decisive and short; no dialogue A/B/C format in the board pack.',
+        ],
+        'manager': [
+            'Review for clarity, gaps, and whether conclusions follow from prior tasks.',
+            'Do not recompute reserves; critique structure and reasoning.',
+        ],
+        'audit': [
+            'Cross-check factual and numeric claims against the original cohort summary.',
+            'Use Pass / Issue with brief evidence; flag contradictions between tasks.',
+        ],
+        'revision': [
+            'Implement manager and audit feedback on the board narrative.',
+            'Fix inconsistencies without inventing numbers beyond cohort + prior tasks.',
+        ],
+        'ceo': [
+            'Give go / no-go style assurance for a non-technical reader.',
+            'State what still needs caution; one clear handoff line.',
+        ],
+        'final_report': [
+            'Produce the single audited board paper (formal sections, professional tone).',
+            'Merge prior steps including CEO sign-off; no internal coaching structure in output.',
+        ],
+        'coach': [
+            'Internal-only feedback for the next run; not part of the board pack.',
+            'Address reserving, risk, and exec personas with concrete next-run tips.',
+        ],
+        'generic': [
+            'Build on prior task outputs and cite the cohort summary.',
+            'Stay concise and structured.',
+        ],
+    }
+    return table.get(k, table['generic'])
+
+
+def step_tracker_map_all() -> dict[str, list[str]]:
+    """All step kinds with tracker bullets (for JSON in template)."""
+    return {k: step_tracker_bullets(k) for k in STEP_KINDS_ALLOWED}
+
+
+def crew_display_by_lanes(crew_display: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Group pipeline rows by workflow lane for org-style UI.
+    Each group: {lane_id, lane_title, agents: [{...row, task_index}, ...]}.
+    """
+    buckets: dict[str, dict[str, Any]] = {}
+    for i, row in enumerate(crew_display):
+        kind = str(row.get('step_kind') or 'generic')
+        lid, title = workflow_lane_for_step_kind(kind)
+        if lid not in buckets:
+            buckets[lid] = {'lane_id': lid, 'lane_title': title, 'agents': []}
+        r = dict(row)
+        r['task_index'] = i
+        buckets[lid]['agents'].append(r)
+    return [buckets[lid] for lid in WORKFLOW_LANE_ORDER if lid in buckets]
+
 
 def step_kind_label(kind: str) -> str:
     for k, lab, _ in STEP_KIND_CHOICES:
@@ -351,15 +461,21 @@ def display_label(row: dict[str, Any]) -> str:
 
 
 def run_agents_meta_for_pipeline(pipeline: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Metadata for SSE run_start and task_transition (same shape as legacy CREW_RUN_AGENTS)."""
+    """Metadata for SSE run_start, task_transition, and step_manifest."""
     out: list[dict[str, Any]] = []
     for i, row in enumerate(pipeline):
+        sk = str(row.get('step_kind') or 'generic')
+        lid, ltitle = workflow_lane_for_step_kind(sk)
         out.append(
             {
                 'id': f"crew-task-{i}",
                 'task_index': i,
                 'role': row['role'],
                 'label': display_label(row),
+                'step_kind': sk,
+                'workflow_lane': lid,
+                'workflow_lane_title': ltitle,
+                'tracker_bullets': step_tracker_bullets(sk),
             }
         )
     return out

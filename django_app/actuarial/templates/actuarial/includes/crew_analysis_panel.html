@@ -1,4 +1,6 @@
 {# Requires: crew_analysis_enabled, crew_display, crew_global_instructions, default_crew_brief, team_members, crew_pipeline_min, crew_pipeline_max #}
+{# Optional: crew_step_tracker (Crew runs page). crew_display_lanes is unused here — strip is one row. #}
+{% if crew_step_tracker %}{{ crew_step_tracker|json_script:"crew-step-tracker-data" }}{% endif %}
 <div
   id="crew-analysis-panel"
   class="card"
@@ -55,12 +57,29 @@
   <div id="crew-board-report-wrap" class="crew-board-report-wrap hidden mb-3" style="padding:1rem 1.1rem;border-radius:8px;border:1px solid rgba(42,200,235,0.35);background:rgba(17,24,39,0.5);">
     <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
       <div>
-        <div class="text-xs uppercase-track-sm" style="color:#2ac8eb;">Board report (live)</div>
-        <p id="crew-board-report-live-label" class="text-xs text-gray-500 mb-0 mt-1">Leadership-facing draft while <strong class="text-gray-400">initial report</strong>, <strong class="text-gray-400">executive</strong>, <strong class="text-gray-400">revision</strong>, or <strong class="text-gray-400">audited report</strong> steps stream (each pass replaces the panel until the next board-stage step).</p>
+        <div class="text-xs uppercase-track-sm" style="color:#2ac8eb;">Live run output</div>
+        <p id="crew-board-report-live-label" class="text-xs text-gray-500 mb-0 mt-1">Analyst findings (A) and previous board snapshot (B). The live board draft streams in the <strong class="text-gray-400">Crew pipeline</strong> panel to the right of the agents.</p>
       </div>
       <a id="crew-board-open" class="btn btn-ghost btn-sm hidden" href="#" target="_blank" rel="noopener noreferrer">Open board display</a>
     </div>
-    <div id="crew-board-report-live" class="text-sm text-gray-100 scrollbar-hide" style="white-space:pre-wrap;max-height:280px;overflow:auto;line-height:1.45;min-height:4rem;"></div>
+    <div class="crew-live-board crew-live-board--run crew-live-board--two">
+      <div class="crew-board-col crew-board-col--findings" id="crew-findings-col">
+        <div class="crew-board-head">
+          <span class="crew-board-step">A</span>
+          Analyst findings
+        </div>
+        <div class="crew-board-status" id="crew-findings-status">Waiting…</div>
+        <div id="crew-findings-stream" class="crew-board-snippet crew-findings-stream scrollbar-hide" aria-label="Reserving and risk streamed output"></div>
+      </div>
+      <div class="crew-board-col crew-board-col--snapshot" id="crew-snapshot-col">
+        <div class="crew-board-head">
+          <span class="crew-board-step">B</span>
+          Previous board snapshot
+        </div>
+        <div class="crew-board-status" id="crew-snapshot-status">—</div>
+        <div id="crew-board-report-previous" class="crew-board-snippet scrollbar-hide" style="white-space:pre-wrap;" aria-label="Frozen prior board draft"></div>
+      </div>
+    </div>
   </div>
 
   <div id="crew-workflow-handoff-wrap" class="hidden mb-3" style="padding:0.85rem 1rem;border-radius:8px;border:1px solid rgba(251,191,36,0.35);background:rgba(251,191,36,0.06);">
@@ -81,19 +100,27 @@
         <span id="crew-board-model"></span>
       </span>
     </div>
-    <div class="crew-org-rows" id="crew-org-rows">
-      <div class="crew-org-section">
-        <span class="crew-org-section-kicker">Run order (matches pipeline on Members)</span>
-        <div class="crew-org-pipeline crew-org-pipeline--dynamic" role="list" aria-label="Crew task order">
+    <div id="crew-tracker-panel" class="crew-tracker-panel hidden mb-3">
+      <div class="text-xs uppercase-track-sm text-gray-500 mb-1">Current step — role expectations</div>
+      <div id="crew-tracker-lane" class="text-xs text-gray-500 mb-0"></div>
+      <div id="crew-tracker-step-label" class="text-sm text-gray-200 mt-1 mb-2"></div>
+      <ul id="crew-tracker-list" class="crew-tracker-list text-xs text-gray-400 mb-0 pl-4"></ul>
+    </div>
+    <div class="crew-pipeline-live-split">
+    <div class="crew-pipeline-live-split__lanes">
+      <span class="crew-org-strip-label text-xs text-gray-500 uppercase-track-sm">Run order</span>
+      <div class="crew-org-strip-wrap scrollbar-hide" id="crew-org-rows">
+        <div class="crew-org-pipeline crew-org-pipeline--dynamic crew-org-pipeline--strip" role="list" aria-label="Crew task order">
           {% for a in crew_display %}
           {% if not forloop.first %}
           <div class="crew-org-edge" aria-hidden="true"><span class="crew-org-edge-line"></span></div>
           {% endif %}
-          <div class="crew-org-node {% if a.step_kind == 'ceo' %}crew-org-node--ceo{% endif %}" data-task-idx="{{ forloop.counter0 }}" role="listitem" id="crew-node-{{ forloop.counter0 }}">
+          <div class="crew-org-node {% if a.step_kind == 'ceo' %}crew-org-node--ceo{% endif %}" data-task-idx="{{ forloop.counter0 }}" data-step-kind="{{ a.step_kind }}" data-lane="{{ a.workflow_lane }}" role="listitem" id="crew-node-{{ forloop.counter0 }}">
             <div class="crew-org-node-inner">
               {% if a.step_kind == 'ceo' %}
               <span class="crew-org-badge-top" aria-hidden="true">Human OK</span>
               {% endif %}
+              <span class="crew-org-active-badge" aria-hidden="true">Active</span>
               <span class="crew-org-step">{{ forloop.counter }}</span>
               <span class="crew-org-label">{{ a.display_label }}</span>
               <span class="crew-org-role">{{ a.step_subtitle }}</span>
@@ -103,6 +130,17 @@
           {% endfor %}
         </div>
       </div>
+    </div>
+    <div class="crew-pipeline-live-split__board">
+      <div class="crew-board-col crew-board-col--live crew-board-col--pipeline-live is-active" id="crew-live-col">
+        <div class="crew-board-head">
+          <span class="crew-board-step">C</span>
+          Board report (live)
+        </div>
+        <div class="crew-board-status" id="crew-live-board-status">Streaming…</div>
+        <div id="crew-board-report-live" class="text-sm text-gray-100 scrollbar-hide crew-board-live-body crew-board-live-body--stretch"></div>
+      </div>
+    </div>
     </div>
 
     <div id="crew-live-docs" class="crew-live-docs hidden mt-4">
@@ -114,7 +152,7 @@
       <div class="text-xs text-gray-500 uppercase-track-sm mb-2">By role (same content, split for review)</div>
       <div class="crew-live-docs-grid">
         {% for a in crew_display %}
-        <article class="crew-doc-card {% if a.step_kind == 'ceo' %}crew-doc-card--ceo{% elif a.step_kind == 'final_report' %}crew-doc-card--final{% elif a.step_kind == 'initial_report' %}crew-doc-card--final{% elif a.step_kind == 'manager' or a.step_kind == 'audit' or a.step_kind == 'revision' or a.step_kind == 'coach' %}crew-doc-card--review{% endif %}" data-task-idx="{{ forloop.counter0 }}">
+        <article class="crew-doc-card {% if a.step_kind == 'ceo' %}crew-doc-card--ceo{% elif a.step_kind == 'final_report' %}crew-doc-card--final{% elif a.step_kind == 'initial_report' %}crew-doc-card--final{% elif a.step_kind == 'manager' or a.step_kind == 'audit' or a.step_kind == 'revision' or a.step_kind == 'coach' %}crew-doc-card--review{% endif %}" data-task-idx="{{ forloop.counter0 }}" data-step-kind="{{ a.step_kind }}">
           <header class="crew-doc-card-head">
             <span class="crew-doc-card-title">{{ a.display_label }}</span>
             <span class="crew-doc-card-badge" data-field="badge">—</span>

@@ -3,12 +3,18 @@ import json
 
 from django.conf import settings as django_settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from . import crew_config, member_personalization, ollama_session, services, workspace_state
 from .company_profile import get_company_profile, set_company_profile
+from .workspace_user_profile import (
+    get_workspace_user_profile,
+    resolve_workspace_user_display,
+    set_workspace_user_profile,
+)
 from .persona_defaults import DEFAULT_GLOBAL_CREW_BRIEF
 
 
@@ -26,6 +32,7 @@ def _safe_next_path(raw: str) -> str:
     return path
 
 
+@login_required
 def dashboard(request):
     actuarial_data = _get_rows(request)
     target_loss_ratio = 0.68
@@ -97,15 +104,21 @@ def _crew_pipeline_bundle(request):
         r = dict(row)
         r['display_label'] = crew_config.display_label(row)
         r['step_subtitle'] = crew_config.step_kind_subtitle(str(row.get('step_kind') or ''))
+        sk = str(row.get('step_kind') or 'generic')
+        wlid, wltitle = crew_config.workflow_lane_for_step_kind(sk)
+        r['workflow_lane'] = wlid
+        r['workflow_lane_title'] = wltitle
         crew_display.append(r)
     departments = sorted(
         {a.get('department') or '' for a in pipeline if (a.get('department') or '').strip()}
     )
-    return pipeline, crew_display, departments
+    crew_display_lanes = crew_config.crew_display_by_lanes(crew_display)
+    return pipeline, crew_display, departments, crew_display_lanes
 
 
+@login_required
 def members(request):
-    pipeline, crew_display, departments = _crew_pipeline_bundle(request)
+    pipeline, crew_display, departments, _crew_display_lanes = _crew_pipeline_bundle(request)
     return render(
         request,
         'actuarial/members.html',
@@ -120,13 +133,16 @@ def members(request):
     )
 
 
+@login_required
 def crew_runs(request):
-    _, crew_display, _ = _crew_pipeline_bundle(request)
+    _, crew_display, _, crew_display_lanes = _crew_pipeline_bundle(request)
     return render(
         request,
         'actuarial/crew_runs.html',
         {
             'crew_display': crew_display,
+            'crew_display_lanes': crew_display_lanes,
+            'crew_step_tracker': crew_config.step_tracker_map_all(),
             'crew_pipeline_min': crew_config.MIN_PIPELINE_LEN,
             'crew_pipeline_max': crew_config.MAX_PIPELINE_LEN,
             'crew_analysis_enabled': django_settings.CREW_ANALYSIS_ENABLED,
@@ -139,6 +155,7 @@ def crew_runs(request):
     )
 
 
+@login_required
 def ai_integrations(request):
     return render(
         request,
@@ -162,6 +179,7 @@ SORT_FIELDS = {
 }
 
 
+@login_required
 def database(request):
     raw = list(_get_rows(request))
     q = (request.GET.get('q') or '').strip().lower()
@@ -210,6 +228,7 @@ def database(request):
     )
 
 
+@login_required
 def statistics(request):
     actuarial_data = _get_rows(request)
     stats = services.statistics_summary(actuarial_data)
@@ -225,6 +244,7 @@ def statistics(request):
     )
 
 
+@login_required
 def settings_view(request):
     rt = ollama_session.get_runtime_config(request)
     env = ollama_session.env_defaults()
@@ -238,6 +258,7 @@ def settings_view(request):
     )
 
 
+@login_required
 @require_GET
 def export_actuarial_csv(request):
     rows = _get_rows(request)
@@ -254,6 +275,7 @@ def export_actuarial_csv(request):
     return response
 
 
+@login_required
 @require_GET
 def export_members_csv(request):
     pipeline = crew_config.get_pipeline(request)
@@ -281,6 +303,7 @@ def export_members_csv(request):
     return response
 
 
+@login_required
 @require_GET
 def actuarial_json(request):
     rows = _get_rows(request)
@@ -296,6 +319,7 @@ def actuarial_json(request):
     return JsonResponse(payload)
 
 
+@login_required
 @require_POST
 def save_member_personalization(request):
     try:
@@ -329,6 +353,7 @@ def save_member_personalization(request):
     return JsonResponse({'ok': True})
 
 
+@login_required
 @require_POST
 def save_crew_instructions(request):
     try:
@@ -341,6 +366,7 @@ def save_crew_instructions(request):
     return JsonResponse({'ok': True})
 
 
+@login_required
 @require_POST
 def crew_pipeline_api(request):
     """Configure Crew agent pipeline (database): save list, add/remove agent, reset defaults."""
@@ -399,12 +425,41 @@ def crew_pipeline_api(request):
     return JsonResponse({'ok': False, 'error': 'Unknown action'}, status=400)
 
 
+@login_required
 @require_POST
 def reset_team_personalization(request):
     member_personalization.clear_all_overrides(request)
     return JsonResponse({'ok': True})
 
 
+@login_required
+@require_http_methods(['GET', 'POST'])
+def workspace_user_api(request):
+    if request.method == 'GET':
+        return JsonResponse(
+            {
+                'ok': True,
+                'profile': resolve_workspace_user_display(),
+                'stored': get_workspace_user_profile(),
+            }
+        )
+    try:
+        body = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({'ok': False, 'error': 'Invalid JSON'}, status=400)
+    ok, err = set_workspace_user_profile(body if isinstance(body, dict) else {})
+    if not ok:
+        return JsonResponse({'ok': False, 'error': err}, status=400)
+    return JsonResponse(
+        {
+            'ok': True,
+            'profile': resolve_workspace_user_display(),
+            'stored': get_workspace_user_profile(),
+        }
+    )
+
+
+@login_required
 @require_http_methods(['GET', 'POST'])
 def company_profile_api(request):
     if request.method == 'GET':
@@ -419,6 +474,7 @@ def company_profile_api(request):
     return JsonResponse({'ok': True, 'profile': get_company_profile(request)})
 
 
+@login_required
 @require_POST
 def save_ollama_settings(request):
     try:
@@ -434,6 +490,7 @@ def save_ollama_settings(request):
     return JsonResponse({'ok': True, 'config': ollama_session.get_runtime_config(request)})
 
 
+@login_required
 @require_GET
 def ollama_models_list(request):
     """
@@ -472,6 +529,7 @@ def ollama_models_list(request):
     )
 
 
+@login_required
 @require_POST
 def regenerate_actuarial_data(request):
     workspace_state.regenerate_actuarial_seed()

@@ -7,6 +7,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.http import FileResponse, JsonResponse, StreamingHttpResponse
@@ -81,6 +82,7 @@ def _run_to_dict(run: CrewRun, *, include_steps: bool, short_chain: bool = True)
     return out
 
 
+@login_required
 @require_GET
 def crew_health(request):
     """JSON: { ok, model, enabled, ollama_url } — for UI before starting EventSource."""
@@ -109,6 +111,7 @@ def crew_health(request):
     )
 
 
+@login_required
 @require_GET
 def crew_stream(request):
     """
@@ -176,6 +179,7 @@ def crew_stream(request):
     return response
 
 
+@login_required
 @require_GET
 def crew_run_latest(request):
     """Latest saved run for this session (optional member_id filter)."""
@@ -206,6 +210,7 @@ def _run_for_board(request, run_id, token: str | None) -> CrewRun | None:
     return CrewRun.objects.filter(pk=run_id, session_key=sk).first()
 
 
+@login_required
 @require_GET
 def crew_run_detail(request, run_id):
     sk = session_key_for_request(request)
@@ -310,6 +315,7 @@ def crew_board_page(request):
     )
 
 
+@login_required
 @require_POST
 def crew_run_approve(request, run_id):
     sk = session_key_for_request(request)
@@ -361,6 +367,7 @@ def crew_run_approve(request, run_id):
     )
 
 
+@login_required
 @require_GET
 def crew_run_list(request):
     """Recent runs for this session (cap 20). Optional ?member_id= matches crew_run_latest."""
@@ -380,6 +387,7 @@ def crew_run_list(request):
     )
 
 
+@login_required
 @require_POST
 def crew_run_delete(request, run_id):
     """Remove a run and related rows (CASCADE); delete stored PDF file if present."""
@@ -392,6 +400,7 @@ def crew_run_delete(request, run_id):
     return JsonResponse({'ok': True, 'id': rid})
 
 
+@login_required
 @require_GET
 def crew_run_pdf(request, run_id):
     """Download stored PDF for an approved run (same session as run owner)."""

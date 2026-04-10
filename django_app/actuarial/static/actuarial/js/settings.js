@@ -87,12 +87,97 @@
     sync();
   }
 
-  function initSave() {
+  function initWorkspaceUserPanel() {
+    var boot = document.getElementById('settings-workspace-user-boot');
+    if (!boot) return null;
+    var url = boot.getAttribute('data-url');
+    if (!url) return null;
+    var nameEl = document.getElementById('set-name');
+    var emailEl = document.getElementById('set-email');
+    var roleEl = document.getElementById('set-role');
+    var deptEl = document.getElementById('set-dept');
+    var avatarEl = document.getElementById('set-avatar');
+
+    function applyProfile(p) {
+      if (!p) return;
+      if (nameEl) nameEl.value = p.display_name != null ? String(p.display_name) : '';
+      if (emailEl) emailEl.value = p.email != null ? String(p.email) : '';
+      if (roleEl) roleEl.value = p.role != null ? String(p.role) : '';
+      if (deptEl) deptEl.value = p.department != null ? String(p.department) : '';
+      if (avatarEl) avatarEl.value = p.avatar_initials != null ? String(p.avatar_initials) : '';
+    }
+
+    function collectBody() {
+      return {
+        display_name: nameEl && nameEl.value != null ? String(nameEl.value).trim() : '',
+        email: emailEl && emailEl.value != null ? String(emailEl.value).trim() : '',
+        role: roleEl && roleEl.value != null ? String(roleEl.value).trim() : '',
+        department: deptEl && deptEl.value != null ? String(deptEl.value).trim() : '',
+        avatar_initials: avatarEl && avatarEl.value != null ? String(avatarEl.value).trim() : '',
+      };
+    }
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        if (data && data.ok && data.profile) applyProfile(data.profile);
+      })
+      .catch(function () {});
+
+    return { url: url, applyProfile: applyProfile, collectBody: collectBody };
+  }
+
+  function initSave(workspaceUser) {
     var saveBtn = document.getElementById('settings-save');
     var saveLabel = document.getElementById('save-label');
     if (!saveBtn || !saveLabel) return;
     var original = saveLabel.textContent;
     saveBtn.addEventListener('click', function () {
+      var activeBtn = document.querySelector('.settings-nav-btn.active');
+      var section = activeBtn ? activeBtn.getAttribute('data-section') : '';
+      if (section === 'general' && workspaceUser && workspaceUser.url) {
+        saveBtn.disabled = true;
+        saveLabel.textContent = 'Saving…';
+        saveBtn.classList.remove('settings-save--success');
+        fetch(workspaceUser.url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfHeader(),
+          },
+          body: JSON.stringify(workspaceUser.collectBody()),
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { ok: r.ok, data: data };
+            });
+          })
+          .then(function (res) {
+            if (!res.ok || !res.data.ok) {
+              showToast((res.data && res.data.error) || 'Save failed.');
+              return;
+            }
+            if (res.data.profile) workspaceUser.applyProfile(res.data.profile);
+            saveLabel.textContent = 'Saved';
+            saveBtn.classList.add('settings-save--success');
+            showToast('Profile saved.');
+            window.setTimeout(function () {
+              window.location.reload();
+            }, 600);
+          })
+          .catch(function () {
+            showToast('Network error.');
+          })
+          .then(function () {
+            saveLabel.textContent = original;
+            saveBtn.classList.remove('settings-save--success');
+            saveBtn.disabled = false;
+          });
+        return;
+      }
       saveBtn.disabled = true;
       saveLabel.textContent = 'Saving…';
       saveBtn.classList.remove('settings-save--success');
@@ -538,9 +623,10 @@
   }
 
   function init() {
+    var workspaceUser = initWorkspaceUserPanel();
     initTabs();
     initSessionRange();
-    initSave();
+    initSave(workspaceUser);
     initCopy();
     initTheme();
     initGenerateKey();

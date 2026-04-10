@@ -87,12 +87,97 @@
     sync();
   }
 
-  function initSave() {
+  function initWorkspaceUserPanel() {
+    var boot = document.getElementById('settings-workspace-user-boot');
+    if (!boot) return null;
+    var url = boot.getAttribute('data-url');
+    if (!url) return null;
+    var nameEl = document.getElementById('set-name');
+    var emailEl = document.getElementById('set-email');
+    var roleEl = document.getElementById('set-role');
+    var deptEl = document.getElementById('set-dept');
+    var avatarEl = document.getElementById('set-avatar');
+
+    function applyProfile(p) {
+      if (!p) return;
+      if (nameEl) nameEl.value = p.display_name != null ? String(p.display_name) : '';
+      if (emailEl) emailEl.value = p.email != null ? String(p.email) : '';
+      if (roleEl) roleEl.value = p.role != null ? String(p.role) : '';
+      if (deptEl) deptEl.value = p.department != null ? String(p.department) : '';
+      if (avatarEl) avatarEl.value = p.avatar_initials != null ? String(p.avatar_initials) : '';
+    }
+
+    function collectBody() {
+      return {
+        display_name: nameEl && nameEl.value != null ? String(nameEl.value).trim() : '',
+        email: emailEl && emailEl.value != null ? String(emailEl.value).trim() : '',
+        role: roleEl && roleEl.value != null ? String(roleEl.value).trim() : '',
+        department: deptEl && deptEl.value != null ? String(deptEl.value).trim() : '',
+        avatar_initials: avatarEl && avatarEl.value != null ? String(avatarEl.value).trim() : '',
+      };
+    }
+
+    fetch(url, { credentials: 'same-origin' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        if (data && data.ok && data.profile) applyProfile(data.profile);
+      })
+      .catch(function () {});
+
+    return { url: url, applyProfile: applyProfile, collectBody: collectBody };
+  }
+
+  function initSave(workspaceUser) {
     var saveBtn = document.getElementById('settings-save');
     var saveLabel = document.getElementById('save-label');
     if (!saveBtn || !saveLabel) return;
     var original = saveLabel.textContent;
     saveBtn.addEventListener('click', function () {
+      var activeBtn = document.querySelector('.settings-nav-btn.active');
+      var section = activeBtn ? activeBtn.getAttribute('data-section') : '';
+      if (section === 'general' && workspaceUser && workspaceUser.url) {
+        saveBtn.disabled = true;
+        saveLabel.textContent = 'Saving…';
+        saveBtn.classList.remove('settings-save--success');
+        fetch(workspaceUser.url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfHeader(),
+          },
+          body: JSON.stringify(workspaceUser.collectBody()),
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { ok: r.ok, data: data };
+            });
+          })
+          .then(function (res) {
+            if (!res.ok || !res.data.ok) {
+              showToast((res.data && res.data.error) || 'Save failed.');
+              return;
+            }
+            if (res.data.profile) workspaceUser.applyProfile(res.data.profile);
+            saveLabel.textContent = 'Saved';
+            saveBtn.classList.add('settings-save--success');
+            showToast('Profile saved.');
+            window.setTimeout(function () {
+              window.location.reload();
+            }, 600);
+          })
+          .catch(function () {
+            showToast('Network error.');
+          })
+          .then(function () {
+            saveLabel.textContent = original;
+            saveBtn.classList.remove('settings-save--success');
+            saveBtn.disabled = false;
+          });
+        return;
+      }
       saveBtn.disabled = true;
       saveLabel.textContent = 'Saving…';
       saveBtn.classList.remove('settings-save--success');
@@ -162,6 +247,141 @@
     return m ? m.getAttribute('content') || '' : '';
   }
 
+  function initOrganizationPanel() {
+    var boot = document.getElementById('settings-company-boot');
+    if (!boot) return;
+    var url = boot.getAttribute('data-url');
+    if (!url) return;
+    var msg = document.getElementById('settings-company-msg');
+    var saveBtn = document.getElementById('settings-company-save');
+    var clearBtn = document.getElementById('settings-company-clear');
+    var fields = {
+      company_name: 'co-name',
+      legal_name: 'co-legal',
+      tagline: 'co-tagline',
+      address: 'co-address',
+      city: 'co-city',
+      region: 'co-region',
+      postal_code: 'co-postal',
+      country: 'co-country',
+      phone: 'co-phone',
+      email: 'co-email',
+      website: 'co-website',
+      logo_url: 'co-logo',
+    };
+
+    function feedback(t, isErr) {
+      if (!msg) return;
+      msg.textContent = t || '';
+      msg.style.color = isErr ? '#f87171' : '';
+    }
+
+    function applyProfile(p) {
+      if (!p) return;
+      Object.keys(fields).forEach(function (k) {
+        var el = document.getElementById(fields[k]);
+        if (el) el.value = p[k] != null ? String(p[k]) : '';
+      });
+    }
+
+    function collectBody() {
+      var o = {};
+      Object.keys(fields).forEach(function (k) {
+        var el = document.getElementById(fields[k]);
+        o[k] = el && el.value != null ? String(el.value).trim() : '';
+      });
+      return o;
+    }
+
+    function load() {
+      feedback('');
+      fetch(url, { credentials: 'same-origin' })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (data && data.ok && data.profile) applyProfile(data.profile);
+        })
+        .catch(function () {
+          feedback('Could not load organization settings.', true);
+        });
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        feedback('Saving…');
+        saveBtn.disabled = true;
+        fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfHeader(),
+          },
+          body: JSON.stringify(collectBody()),
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { ok: r.ok, data: data };
+            });
+          })
+          .then(function (res) {
+            if (!res.ok || !res.data.ok) {
+              feedback((res.data && res.data.error) || 'Save failed.', true);
+              return;
+            }
+            applyProfile(res.data.profile);
+            feedback('Saved.');
+            showToast('Organization branding saved.');
+          })
+          .catch(function () {
+            feedback('Network error.', true);
+          })
+          .then(function () {
+            saveBtn.disabled = false;
+          });
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        feedback('Clearing…');
+        clearBtn.disabled = true;
+        fetch(url, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfHeader(),
+          },
+          body: '{}',
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { ok: r.ok, data: data };
+            });
+          })
+          .then(function (res) {
+            if (!res.ok || !res.data.ok) {
+              feedback((res.data && res.data.error) || 'Clear failed.', true);
+              return;
+            }
+            applyProfile(res.data.profile);
+            feedback('Cleared.');
+            showToast('Organization branding cleared.');
+          })
+          .catch(function () {
+            feedback('Network error.', true);
+          })
+          .then(function () {
+            clearBtn.disabled = false;
+          });
+      });
+    }
+
+    load();
+  }
+
   function initOllamaPanel() {
     var boot = document.getElementById('settings-ollama-boot');
     if (!boot) return;
@@ -223,7 +443,7 @@
         useBtn.setAttribute('data-model', name);
         useBtn.addEventListener('click', function () {
           if (modelEl) modelEl.value = name;
-          feedback('Model set to ' + name + '. Save session overrides to apply for Crew runs.');
+          feedback('Model set to ' + name + '. Save overrides to apply for Crew runs.');
         });
         tdName.appendChild(useBtn);
         tdSize.textContent = m.size_label || (m.size != null ? String(m.size) : '—');
@@ -340,7 +560,7 @@
           })
           .then(function (data) {
             if (!data.ok) throw new Error(data.error || 'Save failed');
-            showToast('Ollama session settings saved.');
+            showToast('Ollama settings saved.');
             feedback('Saved. Members page health check will use these values.');
             window.setTimeout(function () {
               window.location.reload();
@@ -355,7 +575,7 @@
 
     if (resetEnvBtn && saveUrl) {
       resetEnvBtn.addEventListener('click', function () {
-        if (!window.confirm('Clear session Ollama overrides and use server environment defaults?')) return;
+        if (!window.confirm('Clear saved Ollama overrides and use server environment defaults?')) return;
         feedback('Resetting…');
         fetch(saveUrl, {
           method: 'POST',
@@ -403,12 +623,14 @@
   }
 
   function init() {
+    var workspaceUser = initWorkspaceUserPanel();
     initTabs();
     initSessionRange();
-    initSave();
+    initSave(workspaceUser);
     initCopy();
     initTheme();
     initGenerateKey();
+    initOrganizationPanel();
     initOllamaPanel();
   }
 

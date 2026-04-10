@@ -1,0 +1,179 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Secure sign-in to the Actuarial Loss Dashboard — cohort analytics, crew AI workflows, and governance-ready reporting.">
+  <title>Sign in | Actuarial Loss Dashboard</title>
+  <link rel="stylesheet" href="{% static 'actuarial/css/app.css' %}">
+</head>
+<body class="auth-page">
+  <div class="auth-backdrop" aria-hidden="true">
+    <div class="auth-backdrop-mesh"></div>
+    <div class="auth-orb auth-orb--a"></div>
+    <div class="auth-orb auth-orb--b"></div>
+    <div class="auth-orb auth-orb--c"></div>
+    <div class="auth-shoot"></div>
+  </div>
+
+  <header class="auth-topbar">
+    <div class="auth-topbar-inner">
+      <div class="auth-product-lockup">
+        <span class="auth-product-mark" id="auth-logo-mark" title="Double-click for a surprise">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="22" width="4" height="8" rx="1" fill="currentColor" opacity="0.35"/>
+            <rect x="9" y="14" width="4" height="16" rx="1" fill="currentColor" opacity="0.55"/>
+            <rect x="16" y="8" width="4" height="22" rx="1" fill="currentColor" opacity="0.75"/>
+            <rect x="23" y="4" width="4" height="26" rx="1" fill="currentColor"/>
+            <path d="M2 6h28v2H2V6zm0-3h20v2H2V3z" fill="currentColor" opacity="0.2"/>
+          </svg>
+        </span>
+        <div>
+          <span class="auth-product-name">Actuarial Loss Dashboard</span>
+          <span class="auth-product-badge">Workspace</span>
+        </div>
+      </div>
+      <div class="auth-topbar-right">
+        <span class="auth-live-pill"><span class="auth-live-dot" aria-hidden="true"></span> Workspace live</span>
+        <span class="auth-chip">Mock data · demo-safe</span>
+        <p class="auth-topbar-meta">Internal analytics &amp; crew intelligence</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="auth-main">
+    <div class="auth-grid">
+      <section class="auth-brand-panel" aria-labelledby="auth-brand-heading">
+        <p class="auth-eyebrow" id="auth-brand-heading">Enterprise workspace access</p>
+        <h1 class="auth-headline">Reserving intelligence, one secure session away</h1>
+        <div class="auth-spark-box" aria-hidden="true">
+          <svg class="auth-spark-svg" viewBox="0 0 200 48" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="auth-spark-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="rgba(42,200,235,0.15)"/>
+                <stop offset="50%" stop-color="rgba(42,200,235,0.85)"/>
+                <stop offset="100%" stop-color="rgba(129,140,248,0.5)"/>
+              </linearGradient>
+            </defs>
+            <path class="auth-spark-fill" d="M0,40 L25,38 L50,28 L75,32 L100,12 L125,22 L150,8 L175,18 L200,6 L200,48 L0,48 Z" />
+            <path class="auth-spark-line" fill="none" stroke="url(#auth-spark-grad)" stroke-width="2" stroke-linecap="round" d="M0,36 L25,34 L50,26 L75,30 L100,14 L125,22 L150,10 L175,16 L200,8" />
+          </svg>
+          <span class="auth-spark-label">Illustrative loss trend</span>
+        </div>
+        <p class="auth-lede">
+          Sign in to review accident-year cohorts, run AI-assisted crew workflows, and export committee-ready materials. Your session is tied to this application instance only.
+        </p>
+        <ul class="auth-features" role="list">
+          <li>
+            <span class="auth-feature-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </span>
+            <span><strong>Portfolio analytics</strong> — loss development, vulnerability, and trend views on a shared mock dataset seed.</span>
+          </li>
+          <li>
+            <span class="auth-feature-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </span>
+            <span><strong>Crew &amp; Ollama</strong> — configurable pipelines with optional local LLM integration for analysis runs.</span>
+          </li>
+          <li>
+            <span class="auth-feature-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </span>
+            <span><strong>Session-based access</strong> — authenticate with your Django user; sensitive actions require an active login.</span>
+          </li>
+        </ul>
+        <div class="auth-badge-row" aria-hidden="true">
+          <span class="auth-badge">Dashboard</span>
+          <span class="auth-badge">Crew runs</span>
+          <span class="auth-badge auth-badge--pop">Ollama-ready</span>
+          <span class="auth-badge">CSV export</span>
+        </div>
+        <div class="auth-tip-window">
+          <div class="auth-tip-track">
+            <p class="auth-tip-line">Tip: add an <strong>optional focus</strong> on crew runs — specificity beats a wall of context.</p>
+            <p class="auth-tip-line">Tip: <strong>regenerate</strong> the actuarial seed in SCAN when you want a fresh mock cohort.</p>
+            <p class="auth-tip-line">Tip: your <strong>workspace profile</strong> in Settings → General drives the sidebar — make it yours.</p>
+            <p class="auth-tip-line" aria-hidden="true">Tip: add an <strong>optional focus</strong> on crew runs — specificity beats a wall of context.</p>
+          </div>
+        </div>
+        <div class="auth-brand-footnote">
+          <span class="auth-dot" aria-hidden="true"></span>
+          If you need an account or a password reset, contact your workspace administrator.
+        </div>
+      </section>
+
+      <section class="auth-form-panel" aria-labelledby="auth-form-heading">
+        <div class="auth-form-card card">
+          <div class="auth-form-card-head">
+            <h2 class="auth-form-title" id="auth-form-heading">Sign in</h2>
+            <p class="auth-form-subtitle">Enter your credentials to open the dashboard. All traffic should be used on trusted networks.</p>
+          </div>
+
+          {% if form.errors %}
+          <div class="auth-alert" role="alert">
+            <span class="auth-alert-icon" aria-hidden="true">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </span>
+            <div>
+              <strong class="auth-alert-title">Could not sign you in</strong>
+              <p class="auth-alert-text">Check your username and password. After several failed attempts, ask an administrator to verify your account.</p>
+            </div>
+          </div>
+          {% endif %}
+
+          <form method="post" action="{% url 'login' %}" class="auth-form" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+            <div class="auth-field">
+              <label class="auth-label" for="id_username">Username</label>
+              <input id="id_username" name="username" type="text" class="input-dark auth-input" autocomplete="username" required autofocus placeholder="e.g. jane.doe" value="{{ form.username.value|default:'' }}">
+              <p class="auth-hint">Use the username issued for this deployment (not your email, unless configured that way).</p>
+            </div>
+
+            <div class="auth-field">
+              <div class="auth-label-row">
+                <label class="auth-label" for="id_password">Password</label>
+              </div>
+              <input id="id_password" name="password" type="password" class="input-dark auth-input" autocomplete="current-password" required placeholder="••••••••">
+              <p class="auth-hint">Passwords are validated server-side. This form does not store credentials in the browser beyond your session cookie.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit">
+              <span>Continue to dashboard</span>
+              <svg class="auth-submit-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+          </form>
+
+          <div class="auth-form-divider" role="presentation"></div>
+
+          <div class="auth-meta-block">
+            <p class="auth-meta-title">Security notes</p>
+            <ul class="auth-meta-list">
+              <li>Always sign out on shared machines using <strong>Log out</strong> in the app sidebar.</li>
+              <li>Do not reuse production passwords in development environments.</li>
+            </ul>
+          </div>
+        </div>
+
+        <footer class="auth-page-footer">
+          <p class="auth-footer-line">Actuarial Loss Dashboard · workspace tooling</p>
+          <p class="auth-footer-line auth-footer-muted">© {% now "Y" %} · For authorized use only</p>
+          <p class="auth-footer-easter" aria-hidden="true">Psst — the logo knows a secret.</p>
+        </footer>
+      </section>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var logo = document.getElementById('auth-logo-mark');
+      if (!logo) return;
+      logo.addEventListener('dblclick', function () {
+        document.body.classList.toggle('auth-party');
+      });
+    })();
+  </script>
+</body>
+</html>

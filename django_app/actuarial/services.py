@@ -26,6 +26,7 @@ class ActuarialYear(TypedDict):
 class TeamMember(TypedDict):
     id: str
     name: str
+    email: str
     role: str
     department: str
     status: Literal['active', 'busy', 'offline', 'in-meeting']
@@ -129,6 +130,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '1',
             'name': 'Andrew Sabato',
+            'email': 'andrew.sabato@company.com',
             'role': 'Chief Actuary',
             'department': 'Analytics',
             'status': 'active',
@@ -140,6 +142,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '2',
             'name': 'Sarah Chen',
+            'email': '',
             'role': 'Senior Data Scientist',
             'department': 'Data Science',
             'status': 'busy',
@@ -151,6 +154,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '3',
             'name': 'Marcus Johnson',
+            'email': '',
             'role': 'Risk Analyst',
             'department': 'Risk Management',
             'status': 'active',
@@ -162,6 +166,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '4',
             'name': 'Emily Rodriguez',
+            'email': '',
             'role': 'Actuarial Associate',
             'department': 'Pricing',
             'status': 'in-meeting',
@@ -173,6 +178,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '5',
             'name': 'David Park',
+            'email': '',
             'role': 'Systems Architect',
             'department': 'IT',
             'status': 'active',
@@ -184,6 +190,7 @@ def get_team_members() -> List[TeamMember]:
         {
             'id': '6',
             'name': 'Lisa Thompson',
+            'email': '',
             'role': 'Compliance Officer',
             'department': 'Legal',
             'status': 'offline',

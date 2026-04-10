@@ -53,6 +53,11 @@ class WorkspaceState(models.Model):
     ollama_model = models.CharField(max_length=200, blank=True, default='')
     crew_timeout_sec = models.PositiveIntegerField(null=True, blank=True)
     actuarial_seed = models.PositiveIntegerField(null=True, blank=True)
+    workspace_display_name = models.CharField(max_length=200, blank=True, default='')
+    workspace_email = models.CharField(max_length=120, blank=True, default='')
+    workspace_role = models.CharField(max_length=200, blank=True, default='')
+    workspace_department = models.CharField(max_length=120, blank=True, default='')
+    workspace_avatar_initials = models.CharField(max_length=3, blank=True, default='')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
