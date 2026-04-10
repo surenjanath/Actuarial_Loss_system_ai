@@ -36,8 +36,6 @@ A **Django** web app for actuarial-style loss analytics: interactive **Dashboard
 
 ---
 
-Server-rendered port of the React + Vite dashboard in the parent folder: same screens (Dashboard, Members, Database, Statistics, Settings), mock actuarial data, and client-side charts/particles.
-
 ## Prerequisites
 
 - Python 3.10+ recommended
