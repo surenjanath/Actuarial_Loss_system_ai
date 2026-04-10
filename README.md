@@ -94,13 +94,13 @@ Configure agents on **Members** (`/members/`); run analysis and review history o
 
 1. Install [Ollama](https://ollama.com/) and pull a model, for example:
    ```powershell
-   ollama pull llama3.2
+   ollama run gemma3:4b
    ```
 2. Start the Ollama server (often automatic after install; otherwise run `ollama serve`). Default API URL is `http://127.0.0.1:11434`.
 3. Optional environment variables (PowerShell example):
    ```powershell
    $env:OLLAMA_BASE_URL = "http://127.0.0.1:11434"
-   $env:OLLAMA_MODEL = "llama3.2"
+   $env:OLLAMA_MODEL = "gemma3:4b"
    $env:CREW_ANALYSIS_ENABLED = "true"
    $env:CREW_RUN_TIMEOUT_SEC = "420"
    ```
