@@ -1,0 +1,276 @@
+{% extends "actuarial/base.html" %}
+{% load static humanize actuarial_extras %}
+
+{% block content %}
+<div class="page-scroll scrollbar-hide dashboard-page">
+  {{ particle_data_js|json_script:"particle-data" }}
+  {{ dashboard_data_js|json_script:"dashboard-data" }}
+
+  <div class="p-8 space-y-6" id="dashboard-root"
+       data-max-probability="{{ max_probability }}">
+
+    {% include "actuarial/includes/page_actions_actuarial.html" %}
+
+    <header class="dash-header">
+      <div>
+        <p class="dash-kicker">Overview</p>
+        <h1 class="dash-title">Actuarial loss dashboard</h1>
+        <p class="dash-meta">Portfolio-level vulnerability, loss development, and reserve signals in one place. Adjust weights on the vulnerability card to stress-test how sensitive the composite score is to incurred loss, trend, and reserve adequacy.</p>
+      </div>
+      {% if year_range_label %}
+      <div class="dash-header-aside">
+        <span class="dash-period">Analysis window</span>
+        <span class="dash-period-value">{{ year_range_label }}</span>
+        <span class="dash-meta" style="display:block;margin-top:0.35rem;">{{ metrics.years_analyzed }} accident years · mock data (DB seed)</span>
+      </div>
+      {% endif %}
+    </header>
+
+    <div class="grid-4">
+      <div class="dash-stat-card" data-accent="cyan">
+        <div class="dash-stat-card__inner">
+          <div class="dash-stat-card__top">
+            <span class="dash-stat-card__label">Total functions</span>
+            <span class="dash-stat-card__icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+            </span>
+          </div>
+          <div class="stat-3xl text-white mb-1" id="metric-functions">{{ total_functions_display }}</div>
+          <div class="text-xs text-gray-500">Scaled index · {{ metrics.years_analyzed }} years in cohort</div>
+        </div>
+      </div>
+      <div class="dash-stat-card" data-accent="amber">
+        <div class="dash-stat-card__inner">
+          <div class="dash-stat-card__top">
+            <span class="dash-stat-card__label">Open issues</span>
+            <span class="dash-stat-card__icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </span>
+          </div>
+          <div class="stat-3xl text-white mb-1" id="metric-issues">{{ issues_display }}</div>
+          <div class="text-xs text-gray-500">Floor(avg vulnerability × 10) · updates with sliders</div>
+        </div>
+      </div>
+      <div class="dash-stat-card" data-accent="violet">
+        <div class="dash-stat-card__inner">
+          <div class="dash-stat-card__top">
+            <span class="dash-stat-card__label">Total incurred</span>
+            <span class="dash-stat-card__icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3 6 12H2"/></svg>
+            </span>
+          </div>
+          <div class="stat-3xl text-white mb-1">${{ metrics.total_incurred|floatformat:0|intcomma }}</div>
+          <div class="text-xs text-gray-500">{{ metrics.incurred_pct_premium|floatformat:1 }}% of earned premium</div>
+        </div>
+      </div>
+      <div class="dash-stat-card" data-accent="emerald">
+        <div class="dash-stat-card__inner">
+          <div class="dash-stat-card__top">
+            <span class="dash-stat-card__label">System health</span>
+            <span class="dash-stat-card__icon" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+            </span>
+          </div>
+          <div class="stat-3xl text-white mb-1" id="metric-health">{{ health_pct }}</div>
+          <div class="text-xs text-gray-500">100% − portfolio avg vulnerability</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-4 dash-portfolio-depth">
+      <h3 class="text-xs uppercase-track-sm text-gray-400 mb-1">Portfolio depth</h3>
+      <p class="text-xs text-gray-500 mb-3">Static totals for this dataset; vulnerability bars and health react when you move the model sliders.</p>
+      <div class="grid-4 gap-2">
+        <div class="dash-portfolio-cell">
+          <div class="dash-portfolio-kicker">Earned premium</div>
+          <div class="dash-portfolio-value">${{ metrics.total_premium|floatformat:0|intcomma }}</div>
+          <div class="dash-portfolio-note">Sum across all years in the cohort.</div>
+        </div>
+        <div class="dash-portfolio-cell">
+          <div class="dash-portfolio-kicker">Loss ratio band</div>
+          <div class="dash-portfolio-value">{{ metrics.lr_range_low|mul:100|floatformat:2 }}% – {{ metrics.lr_range_high|mul:100|floatformat:2 }}%</div>
+          <div class="dash-portfolio-note">Min / max observed calendar-year loss ratio.</div>
+        </div>
+        <div class="dash-portfolio-cell">
+          <div class="dash-portfolio-kicker">Above target LR</div>
+          <div class="dash-portfolio-value">{{ metrics.years_above_target }} <span class="text-sm text-gray-500 font-normal">/ {{ metrics.years_analyzed }}</span></div>
+          <div class="dash-portfolio-note">Years with loss ratio &gt; {{ target_loss_ratio|mul:100|floatformat:0 }}% target (initial).</div>
+        </div>
+        <div class="dash-portfolio-cell">
+          <div class="dash-portfolio-kicker">Loss trend mix</div>
+          <div class="dash-portfolio-value">
+            <span class="text-red">{{ metrics.trend_up }}↑</span>
+            <span class="text-gray-500 mx-1">·</span>
+            <span class="text-green">{{ metrics.trend_down }}↓</span>
+            <span class="text-gray-500 mx-1">·</span>
+            <span class="text-gray-400">{{ metrics.trend_stable }}→</span>
+          </div>
+          <div class="dash-portfolio-note">Year-over-year direction vs prior year in series.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-viz-card overflow-hidden">
+      <div class="dash-viz-head">
+        <div class="flex justify-between items-start flex-wrap gap-3">
+          <div>
+            <h2 class="dash-viz-head__title">Loss development field</h2>
+            <p class="dash-viz-head__desc">Particle density by accident year and loss ratio vs your target. Horizontal position follows accident year (older left, newer right); vertical spread reflects distance from target loss ratio. Hover to explore density.</p>
+          </div>
+          <div class="dash-viz-legend">
+            <span class="dash-legend-pill"><span class="dash-legend-dot dash-legend-dot--cyan"></span> Normal</span>
+            <span class="dash-legend-pill"><span class="dash-legend-dot dash-legend-dot--amber"></span> Elevated</span>
+            <span class="dash-legend-pill"><span class="dash-legend-dot dash-legend-dot--red"></span> Critical</span>
+          </div>
+        </div>
+      </div>
+      <div class="particle-wrap">
+        <canvas id="particle-canvas" aria-hidden="true"></canvas>
+        <div class="particle-grid-overlay"></div>
+        <div class="dash-particle-hud dash-particle-hud--claims">
+          <div class="dash-particle-hud__value">{{ metrics.total_claims|intcomma }}</div>
+          <div class="dash-particle-hud__label">Reported claims (all years)</div>
+        </div>
+        <div class="dash-particle-hud dash-particle-hud--time">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <span class="text-xs uppercase-track-sm" id="last-updated">Last updated: —</span>
+        </div>
+      </div>
+    </div>
+
+    <section class="card prob-section vuln-card" id="prob-section">
+      <div class="dash-prob-card__head">
+        <div>
+          <h2 class="text-sm uppercase-track text-gray-400 mb-1">Vulnerability by accident year</h2>
+          <p class="text-xs text-gray-500 mb-1">Composite score blends loss ratio vs target, trend direction, and reserve adequacy using the weights on the right. The dashed line marks a 50% reference on the same vertical scale as the bars.</p>
+          <p class="text-xs text-gray-500 mb-0" id="vuln-threshold-summary">—</p>
+        </div>
+        <div class="dash-risk-badge">
+          <div class="dash-risk-badge__value" id="avg-risk-val">{{ metrics.avg_vulnerability|floatformat:2 }}%</div>
+          <div class="dash-risk-badge__label">Portfolio average</div>
+          <div class="text-xs text-gray-500 mt-1" id="vuln-range-hint">Range {{ metrics.min_vulnerability|floatformat:1 }}–{{ metrics.max_vulnerability|floatformat:1 }}% (initial weights)</div>
+        </div>
+      </div>
+
+      <div class="vuln-card__main">
+        <div class="vuln-card__chart">
+          <div class="prob-bars-wrap" id="prob-bars-container">
+            <div class="prob-bars-inner" id="prob-bars"></div>
+            <div id="threshold-line" class="prob-threshold-line">
+              <span class="prob-threshold-label">50% reference</span>
+            </div>
+          </div>
+          <div class="dash-hint-row vuln-card__hints">
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 7-8 10-4-4-6 6"/></svg> Taller bar → higher vulnerability score</span>
+            <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg> Click a year for full metrics · Esc to close panel</span>
+          </div>
+        </div>
+
+        <aside class="vuln-card__aside" aria-label="Model parameters">
+          <h3 class="dash-controls-title">Model parameters</h3>
+          <p class="text-xs text-gray-500 mb-3">Weights should sum to 100% for a balanced interpretation; moving <strong class="text-gray-400">incurred weight</strong> automatically redistributes trend and reserve.</p>
+          <div class="vuln-slider-stack">
+            <div class="dash-slider-cell">
+              <label class="uppercase-track" id="lbl-target">Target loss ratio: {% widthratio target_loss_ratio 1 100 %}%</label>
+              <input type="range" class="range-accent w-full" id="input-target" min="0.5" max="0.9" step="0.01" value="{{ target_loss_ratio }}">
+            </div>
+            <div class="dash-slider-cell">
+              <label class="uppercase-track" id="lbl-wi">Incurred weight: {% widthratio weight_incurred 100 1 %}%</label>
+              <input type="range" class="range-accent w-full" id="input-wi" min="0" max="1" step="0.05" value="{{ weight_incurred }}">
+            </div>
+            <div class="dash-slider-cell">
+              <label class="uppercase-track" id="lbl-wt">Trend weight: {% widthratio weight_trend 100 1 %}%</label>
+              <input type="range" class="range-accent w-full" id="input-wt" min="0" max="1" step="0.05" value="{{ weight_trend }}">
+            </div>
+            <div class="dash-slider-cell">
+              <label class="uppercase-track" id="lbl-wr">Reserve weight: {% widthratio weight_reserve 100 1 %}%</label>
+              <input type="range" class="range-accent w-full" id="input-wr" min="0" max="1" step="0.05" value="{{ weight_reserve }}">
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <div id="year-details" class="year-detail-panel hidden" role="region" aria-live="polite"></div>
+
+    <div class="grid-2 gap-3">
+      <div class="card p-4">
+        <h3 class="text-xs uppercase-track-sm text-gray-400 mb-2">How the score is built</h3>
+        <ul class="text-xs text-gray-500 space-y-2" style="padding-left:1.1rem;line-height:1.45;">
+          <li><strong class="text-gray-400">Loss ratio term</strong> — compares each year’s loss ratio to your target (capped) and scales by incurred weight.</li>
+          <li><strong class="text-gray-400">Trend term</strong> — adds more pressure when the year-over-year direction is worsening vs improving.</li>
+          <li><strong class="text-gray-400">Reserve term</strong> — inverse adequacy: thinner reserves push the score up, within a capped range.</li>
+        </ul>
+      </div>
+      <div class="card p-4">
+        <h3 class="text-xs uppercase-track-sm text-gray-400 mb-2">Reading this page</h3>
+        <p class="text-xs text-gray-500 mb-2" style="line-height:1.45;">The particle view is illustrative density, not a regulatory filing. Use <strong class="text-gray-400">Statistics</strong> for charts over time and <strong class="text-gray-400">Database</strong> for row-level export and sorting.</p>
+        <p class="text-xs text-gray-600 mb-0">Initial run: <strong class="text-gray-500">{{ metrics.high_vulnerability_years }}</strong> years above 50% on the reference scale at default weights.</p>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="dash-insight-card dash-insight-card--best">
+        <div class="dash-insight-card__inner">
+          <div class="dash-insight-card__tag">
+            <span class="w-2 h-2 rounded-full" style="background:#4ade80;"></span>
+            Best loss ratio
+          </div>
+          <div class="dash-insight-card__year">{{ best_year.accident_year }}</div>
+          <div class="dash-insight-card__sub">{{ best_year_lr }} loss ratio vs target {{ target_lr_str }}</div>
+          <div class="dash-insight-card__detail">
+            <div>Premium <span class="text-gray-300">${{ best_year.earned_premium|floatformat:0|intcomma }}</span></div>
+            <div>{{ best_year.reported_claims|intcomma }} claims · reserve adeq. {{ best_year.reserve_adequacy|floatformat:2 }}</div>
+            <div>Trend:
+              <span class="{% if best_year.trend == 'up' %}text-red{% elif best_year.trend == 'down' %}text-green{% else %}text-gray-400{% endif %}">
+                {% if best_year.trend == 'up' %}↑{% elif best_year.trend == 'down' %}↓{% else %}→{% endif %}
+                {{ best_year.trend|title }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-insight-card dash-insight-card--worst">
+        <div class="dash-insight-card__inner">
+          <div class="dash-insight-card__tag">
+            <span class="w-2 h-2 rounded-full" style="background:#f87171;"></span>
+            Highest loss ratio
+          </div>
+          <div class="dash-insight-card__year">{{ worst_year.accident_year }}</div>
+          <div class="dash-insight-card__sub">{{ worst_year_lr }} loss ratio vs target {{ target_lr_str }}</div>
+          <div class="dash-insight-card__detail">
+            <div>Premium <span class="text-gray-300">${{ worst_year.earned_premium|floatformat:0|intcomma }}</span></div>
+            <div>{{ worst_year.reported_claims|intcomma }} claims · dev. factor {{ worst_year.development_factor|floatformat:3 }}</div>
+            <div>Trend:
+              <span class="{% if worst_year.trend == 'up' %}text-red{% elif worst_year.trend == 'down' %}text-green{% else %}text-gray-400{% endif %}">
+                {% if worst_year.trend == 'up' %}↑{% elif worst_year.trend == 'down' %}↓{% else %}→{% endif %}
+                {{ worst_year.trend|title }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-insight-card dash-insight-card--avg">
+        <div class="dash-insight-card__inner">
+          <div class="dash-insight-card__tag">
+            <span class="w-2 h-2 rounded-full" style="background:#2ac8eb;"></span>
+            Portfolio average
+          </div>
+          <div class="dash-insight-card__year">{{ avg_lr_str }}</div>
+          <div class="dash-insight-card__sub">Weighted mean loss ratio · target {{ target_lr_str }}</div>
+          <div class="dash-insight-card__detail">
+            <div>Combined claims {{ metrics.total_claims|intcomma }} across cohort</div>
+            <div>Cohort incurred / premium: {{ metrics.incurred_pct_premium|floatformat:1 }}%</div>
+            <div>Same underlying rows as Statistics &amp; Database (shared mock dataset)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'actuarial/js/particle_cloud.js' %}"></script>
+<script src="{% static 'actuarial/js/dashboard.js' %}"></script>
+{% endblock %}

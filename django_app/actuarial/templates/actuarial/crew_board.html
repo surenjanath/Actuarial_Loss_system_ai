@@ -1,0 +1,82 @@
+{% extends "actuarial/base.html" %}
+{% load static %}
+{% block title %}Board report · Crew{% endblock %}
+{% block content %}
+<div class="crew-board-page" style="max-width:960px;margin:0 auto;padding:1.5rem;">
+  {% if error %}
+  <p class="text-sm" style="color:#f87171;">{{ error }}</p>
+  {% else %}
+  <header class="mb-4 flex flex-wrap justify-between gap-2 items-start">
+    <div>
+      <h1 class="text-xl font-light text-white mb-1" style="margin:0;">Board report</h1>
+      <p class="text-xs text-gray-500 mb-0">Run <code class="text-gray-400">{{ run_id }}</code> · read-only · auto-refresh</p>
+    </div>
+    <span id="crew-board-status" class="px-3 py-1 rounded text-xs" style="background:rgba(55,65,81,0.6);color:#9ca3af;">…</span>
+  </header>
+  <div
+    id="crew-board-report-body"
+    class="crew-board-report-body text-base text-gray-100 scrollbar-hide"
+    style="white-space:pre-wrap;min-height:40vh;max-height:75vh;overflow:auto;line-height:1.5;padding:1.25rem;border-radius:8px;background:rgba(17,24,39,0.85);border:1px solid rgba(42,200,235,0.2);"
+    aria-live="polite"
+  ></div>
+  <p id="crew-board-meta" class="text-xs text-gray-500 mt-2 mb-0"></p>
+  <div id="crew-board-boot" data-poll-url="{{ poll_url }}" style="display:none;"></div>
+  <script>
+(function () {
+  var boot = document.getElementById('crew-board-boot');
+  if (!boot) return;
+  var pollUrl = boot.getAttribute('data-poll-url');
+  var statusEl = document.getElementById('crew-board-status');
+  var bodyEl = document.getElementById('crew-board-report-body');
+  var metaEl = document.getElementById('crew-board-meta');
+  var n = 0;
+  function tick() {
+    if (!pollUrl) return;
+    fetch(pollUrl, { credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) {
+          if (statusEl) statusEl.textContent = 'Error';
+          return;
+        }
+        var st = data.status || '';
+        if (statusEl) {
+          statusEl.textContent = st;
+          statusEl.style.color = '#e5e7eb';
+          statusEl.style.background = 'rgba(55,65,81,0.6)';
+          if (st === 'running') {
+            statusEl.style.color = '#2ac8eb';
+            statusEl.style.background = 'rgba(42,200,235,0.12)';
+          } else if (st === 'pending_approval') {
+            statusEl.style.color = '#fbbf24';
+            statusEl.style.background = 'rgba(251,191,36,0.12)';
+          } else if (st === 'approved') {
+            statusEl.style.color = '#4ade80';
+            statusEl.style.background = 'rgba(74,222,128,0.12)';
+          } else if (st === 'failed') {
+            statusEl.style.color = '#f87171';
+            statusEl.style.background = 'rgba(248,113,113,0.12)';
+          }
+        }
+        var text = data.live_report_text || data.final_report_text || '';
+        if (bodyEl) bodyEl.textContent = text;
+        if (metaEl) {
+          metaEl.textContent =
+            (data.live_report_at ? 'Updated ' + data.live_report_at : '') +
+            (data.topic ? ' · Topic: ' + data.topic : '');
+        }
+        n += 1;
+        var delay = st === 'running' ? 1800 : 6000;
+        if (st === 'approved' || st === 'failed') delay = 30000;
+        window.setTimeout(tick, delay);
+      })
+      .catch(function () {
+        window.setTimeout(tick, 4000);
+      });
+  }
+  tick();
+})();
+  </script>
+  {% endif %}
+</div>
+{% endblock %}

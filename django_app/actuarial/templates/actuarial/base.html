@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Actuarial Loss Dashboard | Systems Overview{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'actuarial/css/app.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-profile">
+          <div class="sidebar-avatar">
+            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Andrew&backgroundColor=333" alt="Profile" width="40" height="40">
+          </div>
+          <div>
+            <h2 class="sidebar-name">Andrew Sabato</h2>
+            <p class="sidebar-role">Admin</p>
+          </div>
+        </div>
+
+        <details class="scan-menu">
+          <summary class="btn-scan">
+            <span>SCAN</span>
+            <svg class="scan-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+          </summary>
+          <div class="scan-menu-panel">
+            <p class="scan-menu-hint">Quick actions</p>
+            <a href="{% url 'export_actuarial_csv' %}" class="scan-menu-link">Download actuarial CSV</a>
+            <a href="{% url 'actuarial_json' %}" class="scan-menu-link" target="_blank" rel="noopener noreferrer">Open JSON API</a>
+            <a href="{% url 'database' %}" class="scan-menu-link">Open database</a>
+            <form method="post" action="{% url 'regenerate_actuarial_data' %}" class="scan-menu-form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="scan-menu-button">Regenerate actuarial data</button>
+            </form>
+          </div>
+        </details>
+
+        <nav class="nav-stack" aria-label="Main">
+          {% with n=request.resolver_match.url_name %}
+          <a class="nav-item{% if n == 'dashboard' %} active{% endif %}" href="{% url 'dashboard' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+            DASHBOARD
+          </a>
+          <a class="nav-item{% if n == 'members' %} active{% endif %}" href="{% url 'members' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+            MEMBERS
+          </a>
+          <a class="nav-item{% if n == 'crew_runs' %} active{% endif %}" href="{% url 'crew_runs' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+            CREW RUNS
+          </a>
+          <a class="nav-item{% if n == 'ai_integrations' %} active{% endif %}" href="{% url 'ai_integrations' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M16 14v2a4 4 0 0 1-8 0v-2"/><path d="M8 10h8"/><path d="M12 18v4"/></svg></span>
+            AI
+          </a>
+          <a class="nav-item{% if n == 'database' %} active{% endif %}" href="{% url 'database' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg></span>
+            DATABASE
+          </a>
+          <a class="nav-item{% if n == 'statistics' %} active{% endif %}" href="{% url 'statistics' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></span>
+            STATISTICS
+          </a>
+          <a class="nav-item{% if n == 'settings' %} active{% endif %}" href="{% url 'settings' %}">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></span>
+            SETTINGS
+          </a>
+          {% endwith %}
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="sidebar-footer-label">Workspace</span>
+          <span class="sidebar-footer-value">Workspace · v1</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main-panel">
+      {% if messages %}
+      <div class="messages-banner" role="status">
+        {% for message in messages %}
+        <div class="message message-{{ message.level_tag }}" data-auto-dismiss>
+          <span class="message-text">{{ message }}</span>
+          <button type="button" class="message-close" aria-label="Dismiss">×</button>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="{% static 'actuarial/js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,136 @@
+[INFO] 2026-04-09 17:55:26 crewai.cli.config 41316:49488 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:00:15 daphne.cli 46456:32480 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:00:15 daphne.server 46456:32480 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:00:15 daphne.server 46456:32480 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:00:15 daphne.server 46456:32480 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:00:16 crewai.cli.config 40600:38296 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:00:16 django-q 40600:38296 Q Cluster don-mexico-summer-sixteen starting.
+[INFO] 2026-04-09 18:00:17 django-q 50080:32852 Process-d762223662d54c779f8f728cd8269fa0 guarding cluster don-mexico-summer-sixteen [ORM]
+[INFO] 2026-04-09 18:00:17 django-q 50080:32852 Q Cluster don-mexico-summer-sixteen [ORM] running.
+[INFO] 2026-04-09 18:00:18 django-q 37748:46560 Process-78e3ad1e7f1b4c2cba4f9a916076ede3 pushing tasks at 37748
+[INFO] 2026-04-09 18:00:18 django-q 35116:45120 Process-85b3fc96bb084962ac1dda37971287d4 monitoring at 35116
+[INFO] 2026-04-09 18:00:18 django-q 17804:7520 Process-52e55bf9eb3a46c791d6308a2f1e10cf ready for work at 17804
+[INFO] 2026-04-09 18:00:18 django-q 45396:33336 Process-a92104ceb6b545a5b43f3d643e3fa408 ready for work at 45396
+[INFO] 2026-04-09 18:00:23 crewai.cli.config 46456:32480 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:01:47 actuarial.crew_service 46456:41744 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:01:56 httpx 46456:19316 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:02:44 httpx 46456:19792 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[CRITICAL] 2026-04-09 18:03:11 django-q 50080:32852 reincarnated worker Process-52e55bf9eb3a46c791d6308a2f1e10cf after death
+[CRITICAL] 2026-04-09 18:03:11 django-q 50080:32852 reincarnated monitor Process-85b3fc96bb084962ac1dda37971287d4 after sudden death
+[CRITICAL] 2026-04-09 18:03:11 django-q 50080:32852 reincarnated pusher Process-78e3ad1e7f1b4c2cba4f9a916076ede3 after sudden death
+[CRITICAL] 2026-04-09 18:03:12 django-q 50080:32852 reincarnated worker Process-a92104ceb6b545a5b43f3d643e3fa408 after death
+[INFO] 2026-04-09 18:03:12 django-q 7728:27068 Process-93b707fbc9aa4217b2182b56af313f1c pushing tasks at 7728
+[INFO] 2026-04-09 18:03:12 django-q 47380:49568 Process-960850ecb3424c4098808c643e4605f4 monitoring at 47380
+[INFO] 2026-04-09 18:03:12 django-q 6676:44012 Process-0fb7367d004e4dc3b42a9612af0af6ec ready for work at 6676
+[INFO] 2026-04-09 18:03:13 django-q 36608:41788 Process-aeb1674640104d39ac02eb641f25f6c2 ready for work at 36608
+[INFO] 2026-04-09 18:03:47 httpx 46456:40268 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:04:15 crewai.cli.config 49552:35076 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:04:36 httpx 46456:41412 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[WARNING] 2026-04-09 18:04:44 django.request 46456:46996 Too Many Requests: /api/crew/start/
+[WARNING] 2026-04-09 18:04:48 daphne.server 46456:32480 Application instance <Task pending name='Task-129' coro=<ProtocolTypeRouter.__call__() running at C:\Users\Surenjanath Singh\OneDrive - Gulf Insurance Limited\Desktop\Personal Stuff\2026 Projects\Data Solutions Project\Claims Determination\django_app\.venv\Lib\site-packages\channels\routing.py:48> wait_for=<Future pending cb=[shield.<locals>._outer_done_callback() at C:\Python313\Lib\asyncio\tasks.py:975, Task.task_wakeup()]>> for connection <WebRequest at 0x16a64503890 method=GET uri=/api/crew/stream/ clientproto=HTTP/1.1> took too long to shut down and was killed.
+[INFO] 2026-04-09 18:05:28 httpx 46456:43876 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:06:32 httpx 46456:15788 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:06:56 daphne.cli 41568:47196 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:06:56 daphne.server 41568:47196 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:06:56 daphne.server 41568:47196 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:06:56 daphne.server 41568:47196 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:06:58 crewai.cli.config 37248:44432 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:06:59 crewai.cli.config 41568:47196 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:06:59 django-q 37248:44432 Q Cluster cardinal-charlie-oklahoma-nineteen starting.
+[INFO] 2026-04-09 18:07:00 django-q 50896:47968 Process-b4ed8b017dd144168674ea228135a0e5 guarding cluster cardinal-charlie-oklahoma-nineteen [ORM]
+[INFO] 2026-04-09 18:07:00 django-q 50896:47968 Q Cluster cardinal-charlie-oklahoma-nineteen [ORM] running.
+[INFO] 2026-04-09 18:07:00 django-q 42268:31688 Process-7d2efbfe755a4c41bf4e0969683ca1a7 monitoring at 42268
+[INFO] 2026-04-09 18:07:01 django-q 17164:40712 Process-ae91f78b49f34125a5d0a5571bf50481 pushing tasks at 17164
+[INFO] 2026-04-09 18:07:01 django-q 20836:47288 Process-7f1fc7176dfd429b9d1b6d8f8598b1e4 ready for work at 20836
+[INFO] 2026-04-09 18:07:02 actuarial.crew_service 41568:22592 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:07:11 httpx 41568:39660 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:07:53 httpx 41568:35512 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:08:41 httpx 41568:41524 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:09:47 httpx 41568:46096 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:10:54 httpx 41568:45232 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:11:55 httpx 41568:26316 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:13:00 httpx 41568:23564 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:14:03 httpx 41568:33112 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:14:03 crewai.cli.config 47512:17596 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:14:51 daphne.cli 25768:45572 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:14:51 daphne.server 25768:45572 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:14:51 daphne.server 25768:45572 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:14:51 daphne.server 25768:45572 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:14:52 crewai.cli.config 20684:34396 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:14:53 django-q 20684:34396 Q Cluster oven-fourteen-papa-finch starting.
+[INFO] 2026-04-09 18:14:54 django-q 42788:21480 Process-2f5eb5caae6d4d32a1cb8db821bdf16b guarding cluster oven-fourteen-papa-finch [ORM]
+[INFO] 2026-04-09 18:14:54 django-q 42788:21480 Q Cluster oven-fourteen-papa-finch [ORM] running.
+[INFO] 2026-04-09 18:14:54 django-q 47072:36256 Process-0baf64754a384049b29427723ec39014 pushing tasks at 47072
+[INFO] 2026-04-09 18:14:54 django-q 20328:37252 Process-8c97a7af80be405192f29625b497da61 monitoring at 20328
+[INFO] 2026-04-09 18:14:54 django-q 35424:24172 Process-fc7ce37afd1745d7a467e0338b799fa7 ready for work at 35424
+[INFO] 2026-04-09 18:15:07 crewai.cli.config 25768:45572 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:15:12 actuarial.crew_service 25768:47188 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:15:21 httpx 25768:41604 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:16:08 httpx 25768:50516 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:17:02 httpx 25768:41452 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:18:10 httpx 25768:37216 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:19:19 httpx 25768:12552 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:19:53 crewai.cli.config 45164:19060 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:20:30 daphne.cli 31472:13012 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:20:30 daphne.server 31472:13012 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:20:30 daphne.server 31472:13012 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:20:30 daphne.server 31472:13012 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:20:32 crewai.cli.config 1236:49568 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:20:32 django-q 1236:49568 Q Cluster steak-aspen-quiet-ink starting.
+[INFO] 2026-04-09 18:20:33 django-q 43580:35852 Process-0a89b0ca029e4b7f872266ab58865ae4 guarding cluster steak-aspen-quiet-ink [ORM]
+[INFO] 2026-04-09 18:20:33 django-q 43580:35852 Q Cluster steak-aspen-quiet-ink [ORM] running.
+[INFO] 2026-04-09 18:20:34 django-q 43348:47784 Process-41a6312eb34f45f6942108bc624ef7d6 monitoring at 43348
+[INFO] 2026-04-09 18:20:34 django-q 2292:39332 Process-a580c8617d384cf99d68cadfea7b2afa pushing tasks at 2292
+[INFO] 2026-04-09 18:20:34 django-q 15928:17468 Process-61103e8d0e6a4558a1a8e1e4e6ada167 ready for work at 15928
+[INFO] 2026-04-09 18:20:39 crewai.cli.config 31472:13012 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:20:43 actuarial.crew_service 31472:7212 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:20:52 httpx 31472:25488 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[CRITICAL] 2026-04-09 18:21:23 django-q 43580:35852 reincarnated worker Process-61103e8d0e6a4558a1a8e1e4e6ada167 after death
+[CRITICAL] 2026-04-09 18:21:23 django-q 43580:35852 reincarnated monitor Process-41a6312eb34f45f6942108bc624ef7d6 after sudden death
+[CRITICAL] 2026-04-09 18:21:23 django-q 43580:35852 reincarnated pusher Process-a580c8617d384cf99d68cadfea7b2afa after sudden death
+[INFO] 2026-04-09 18:21:24 django-q 26160:39444 Process-bea5b9cfd25a434799c255cb845ee745 monitoring at 26160
+[INFO] 2026-04-09 18:21:24 django-q 49532:17560 Process-9c16c11c437849b6aeb5db0736623bdd pushing tasks at 49532
+[INFO] 2026-04-09 18:21:24 django-q 47616:26408 Process-637f44e54ed04619bee6c3ba1c914b09 ready for work at 47616
+[INFO] 2026-04-09 18:21:40 httpx 31472:5052 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:22:33 httpx 31472:43224 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:23:01 crewai.cli.config 39992:46200 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:23:31 httpx 31472:26540 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:23:54 daphne.cli 45748:27068 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:23:54 daphne.server 45748:27068 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:23:54 daphne.server 45748:27068 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:23:54 daphne.server 45748:27068 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:23:56 crewai.cli.config 7172:45200 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:23:57 django-q 7172:45200 Q Cluster ink-thirteen-mirror-south starting.
+[INFO] 2026-04-09 18:23:57 django-q 33668:35012 Process-e1e8cdcbfabc4f8b8f4306c2df5e55bb guarding cluster ink-thirteen-mirror-south [ORM]
+[INFO] 2026-04-09 18:23:57 django-q 33668:35012 Q Cluster ink-thirteen-mirror-south [ORM] running.
+[INFO] 2026-04-09 18:23:58 django-q 47160:43716 Process-9c54cfb4091544a8a58eec8b34f95e4a pushing tasks at 47160
+[INFO] 2026-04-09 18:23:58 django-q 33480:35384 Process-f8d59d6b4fd6422eb83998793f709677 monitoring at 33480
+[INFO] 2026-04-09 18:23:58 django-q 11956:46568 Process-f5cb21cecbae40f8beecb3b68ddcb522 ready for work at 11956
+[INFO] 2026-04-09 18:23:59 crewai.cli.config 45748:27068 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:24:03 actuarial.crew_service 45748:48096 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:24:11 httpx 45748:32556 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:25:01 httpx 45748:44824 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:25:57 httpx 45748:50100 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:27:00 httpx 45748:49304 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:28:03 crewai.cli.config 26244:22716 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:28:13 httpx 45748:18632 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:28:37 daphne.cli 20116:31572 Starting server at tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:28:37 daphne.server 20116:31572 HTTP/2 support not enabled (install the http2 and tls Twisted extras)
+[INFO] 2026-04-09 18:28:37 daphne.server 20116:31572 Configuring endpoint tcp:port=8000:interface=0.0.0.0
+[INFO] 2026-04-09 18:28:37 daphne.server 20116:31572 Listening on TCP address 0.0.0.0:8000
+[INFO] 2026-04-09 18:28:38 crewai.cli.config 39044:20592 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:28:39 django-q 39044:20592 Q Cluster queen-jupiter-william-edward starting.
+[INFO] 2026-04-09 18:28:40 django-q 41744:49480 Process-ae67cb29d67a465aa30d2136dbc13ad5 guarding cluster queen-jupiter-william-edward [ORM]
+[INFO] 2026-04-09 18:28:40 django-q 41744:49480 Q Cluster queen-jupiter-william-edward [ORM] running.
+[INFO] 2026-04-09 18:28:40 django-q 29020:50092 Process-d5d6719744e344a79d7aa626b32f1a62 monitoring at 29020
+[INFO] 2026-04-09 18:28:40 django-q 13064:36968 Process-3de31bac9834488da280547b71f67ee7 pushing tasks at 13064
+[INFO] 2026-04-09 18:28:40 django-q 20000:26916 Process-4e2d440bf3e84979824227e81c12a81d ready for work at 20000
+[INFO] 2026-04-09 18:28:47 crewai.cli.config 20116:31572 Using config path: C:\Users\Surenjanath Singh\.config\crewai\settings.json
+[INFO] 2026-04-09 18:28:55 actuarial.crew_service 20116:32276 Crew orchestrated run_start session=qk19m6qzys9p… model=qwen2.5:7b agents=8
+[INFO] 2026-04-09 18:29:03 httpx 20116:44228 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:29:32 httpx 20116:35720 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:30:09 httpx 20116:37860 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:31:05 httpx 20116:17900 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:32:00 httpx 20116:39136 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:32:52 httpx 20116:49108 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"
+[INFO] 2026-04-09 18:33:41 httpx 20116:12908 HTTP Request: POST http://192.0.1.90:11434/v1/chat/completions "HTTP/1.1 200 OK"

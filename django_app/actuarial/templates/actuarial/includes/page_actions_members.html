@@ -1,0 +1,11 @@
+<div class="page-actions" role="toolbar" aria-label="Team data actions">
+  <a href="{% url 'export_members_csv' %}" class="btn btn-ghost btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Export crew CSV
+  </a>
+  <form method="post" action="{% url 'regenerate_actuarial_data' %}" class="page-actions__form">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button type="submit" class="btn btn-ghost btn-sm">Regenerate actuarial data</button>
+  </form>
+</div>

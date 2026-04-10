@@ -1,0 +1,131 @@
+{% extends "actuarial/base.html" %}
+{% load static humanize actuarial_extras %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block content %}
+{{ chart_data_js|json_script:"chart-data" }}
+
+<div class="page-scroll scrollbar-hide" style="background:#2a2b2d;">
+  <div class="p-8 space-y-6">
+    {% include "actuarial/includes/page_actions_actuarial.html" %}
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <h1 class="text-2xl font-light text-white mb-2">Statistical Analysis</h1>
+        <p class="text-sm text-gray-500">Comprehensive actuarial metrics and trend analysis</p>
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-gray-500 uppercase-track-sm">Analysis Period</div>
+        <div class="text-white font-medium">{{ stats.first_year }} - {{ stats.last_year }}</div>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="card">
+        <div class="flex justify-between mb-3">
+          <svg width="20" height="20" style="color:#2ac8eb;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span class="text-xs text-gray-500 uppercase-track-sm">Total Premium</span>
+        </div>
+        <div class="text-2xl text-white mb-2">${{ stats.total_premium|floatformat:0|intcomma }}</div>
+        <div class="flex items-center gap-1 text-xs">
+          <svg width="12" height="12" class="text-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 7-8 10-4-4-6 6"/></svg>
+          <span class="text-green">+{{ stats.growth_rate|floatformat:1 }}%</span>
+          <span class="text-gray-500">growth</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex justify-between mb-3">
+          <svg width="20" height="20" class="text-orange" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3 6 12H2"/></svg>
+          <span class="text-xs text-gray-500 uppercase-track-sm">Total Incurred</span>
+        </div>
+        <div class="text-2xl text-white mb-2">${{ stats.total_incurred|floatformat:0|intcomma }}</div>
+        <div class="text-xs text-gray-500">{{ stats.incurred_pct_premium|floatformat:1 }}% of premium</div>
+      </div>
+      <div class="card">
+        <div class="flex justify-between mb-3">
+          <svg width="20" height="20" class="text-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 7-8 10-4-4-6 6"/></svg>
+          <span class="text-xs text-gray-500 uppercase-track-sm">Avg Loss Ratio</span>
+        </div>
+        <div class="text-2xl text-white mb-2">{{ stats.avg_loss_ratio|mul:100|floatformat:2 }}%</div>
+        <div class="text-xs {% if stats.avg_loss_ratio > 0.7 %}text-red{% else %}text-green{% endif %}">
+          {% if stats.avg_loss_ratio > 0.7 %}Above target{% else %}Within target{% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="flex justify-between mb-3">
+          <svg width="20" height="20" class="text-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 7-8 10-4-4-6 6"/></svg>
+          <span class="text-xs text-gray-500 uppercase-track-sm">Total Claims</span>
+        </div>
+        <div class="text-2xl text-white mb-2">{{ stats.total_claims|intcomma }}</div>
+        <div class="text-xs text-gray-500">{{ stats.claims_avg_per_year|floatformat:0 }} avg per year</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card p-6">
+        <h3 class="text-sm uppercase-track text-gray-400 mb-2">Incurred Losses vs Earned Premium</h3>
+        <div class="chart-box"><canvas id="chart-area"></canvas></div>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-sm uppercase-track text-gray-400 mb-2">Historical Loss Ratios</h3>
+        <div class="chart-box"><canvas id="chart-bar-lr"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card p-6">
+        <h3 class="text-sm uppercase-track text-gray-400 mb-2">Claims Development Trend</h3>
+        <div class="chart-box-sm"><canvas id="chart-line-claims"></canvas></div>
+      </div>
+      <div class="card p-6">
+        <h3 class="text-sm uppercase-track text-gray-400 mb-2">Reserve Adequacy Analysis</h3>
+        <div class="chart-box-sm"><canvas id="chart-bar-reserve"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card p-6">
+      <h3 class="text-sm uppercase-track text-gray-400 mb-2">Year-over-Year Analysis</h3>
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th>Premium</th>
+              <th>Incurred</th>
+              <th>Paid</th>
+              <th>Loss Ratio</th>
+              <th>Reserve</th>
+              <th>Trend</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for year in data %}
+            <tr>
+              <td class="text-white font-medium">{{ year.accident_year }}</td>
+              <td class="text-gray-300">${{ year.earned_premium|floatformat:0|intcomma }}</td>
+              <td class="text-white">${{ year.incurred_losses|floatformat:0|intcomma }}</td>
+              <td class="text-gray-300">${{ year.paid_losses|floatformat:0|intcomma }}</td>
+              <td>
+                <span class="font-medium {% if year.loss_ratio > 0.7 %}text-red{% else %}text-green{% endif %}">{{ year.loss_ratio|mul:100|floatformat:2 }}%</span>
+              </td>
+              <td class="text-gray-300">{{ year.reserve_adequacy|floatformat:2 }}</td>
+              <td>
+                <span class="text-lg {% if year.trend == 'up' %}text-red{% elif year.trend == 'down' %}text-green{% else %}text-gray-400{% endif %}">
+                  {% if year.trend == 'up' %}↑{% elif year.trend == 'down' %}↓{% else %}→{% endif %}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'actuarial/js/statistics.js' %}"></script>
+{% endblock %}

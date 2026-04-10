@@ -1,0 +1,492 @@
+{% extends "actuarial/base.html" %}
+{% load static %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-scroll scrollbar-hide settings-shell">
+  <div class="settings-layout">
+    <div class="settings-nav">
+      <h2 class="text-sm uppercase-track text-gray-400 mb-3" id="settings-nav-label">Settings</h2>
+      <nav class="space-y-2" id="settings-nav" role="tablist" aria-labelledby="settings-nav-label">
+        <button type="button" class="settings-nav-btn active" role="tab" aria-selected="true" aria-controls="settings-panel-general" id="settings-tab-general" data-section="general" tabindex="0">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          General
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-organization" id="settings-tab-organization" data-section="organization" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="9" y1="15" x2="9" y2="15.01"/><line x1="9" y1="18" x2="9" y2="18.01"/></svg>
+          Organization
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-ollama" id="settings-tab-ollama" data-section="ollama" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+          Local LLM
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-notifications" id="settings-tab-notifications" data-section="notifications" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          Notifications
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-security" id="settings-tab-security" data-section="security" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+          Security
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-data" id="settings-tab-data" data-section="data" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+          Data &amp; Privacy
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-api" id="settings-tab-api" data-section="api" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.777 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+          API Keys
+        </button>
+        <button type="button" class="settings-nav-btn" role="tab" aria-selected="false" aria-controls="settings-panel-preferences" id="settings-tab-preferences" data-section="preferences" tabindex="-1">
+          <svg class="settings-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          Preferences
+        </button>
+      </nav>
+      <div class="settings-nav-footer">
+        <button type="button" id="settings-save" class="settings-save">
+          <span id="save-icon-save" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg></span>
+          <span id="save-label">Save changes</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="settings-content" id="settings-panels">
+      <section class="settings-panel" data-panel="general" role="tabpanel" id="settings-panel-general" aria-labelledby="settings-tab-general" aria-hidden="false">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Workspace</p>
+          <h1 class="settings-panel-title">General</h1>
+          <p class="settings-panel-desc">Profile details and application build information.</p>
+        </header>
+        <div class="card mb-4">
+          <h3 class="settings-card-title">Profile</h3>
+          <div class="grid-2 gap-3 settings-stack--tight">
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-name">Full name</label>
+              <input id="set-name" type="text" value="Andrew Sabato" class="input-dark input-muted" autocomplete="name">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-email">Email</label>
+              <input id="set-email" type="email" value="andrew.sabato@company.com" class="input-dark input-muted" autocomplete="email">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-role">Role</label>
+              <input id="set-role" type="text" value="Chief Actuary" class="input-dark input-muted">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-dept">Department</label>
+              <input id="set-dept" type="text" value="Analytics" class="input-dark input-muted">
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="settings-card-title">Application</h3>
+          <div class="settings-kv-grid">
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Version</div>
+              <div class="settings-kv-value">v2.4.1</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Build</div>
+              <div class="settings-kv-value font-mono text-xs">20240115.1</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Last update</div>
+              <div class="settings-kv-value">Jan 15, 2024</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Environment</div>
+              <div class="settings-kv-value">Production</div>
+              <span class="settings-env-badge">Live</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="organization" role="tabpanel" id="settings-panel-organization" aria-labelledby="settings-tab-organization" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Reports</p>
+          <h1 class="settings-panel-title">Organization</h1>
+          <p class="settings-panel-desc">Company identity for crew report headers and branding. Saved in the <strong class="text-gray-400">database</strong> (shared for this app instance). Use an <strong class="text-gray-400">https://</strong> image URL for the logo; there is no file upload in this version.</p>
+        </header>
+
+        <div id="settings-company-boot" data-url="{% url 'company_profile_api' %}" hidden></div>
+
+        <div class="card mb-4">
+          <h3 class="settings-card-title">Branding</h3>
+          <div class="grid-2 gap-3 settings-stack--tight">
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-name">Company name</label>
+              <input id="co-name" type="text" class="input-dark input-muted" autocomplete="organization" maxlength="200">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-legal">Legal name</label>
+              <input id="co-legal" type="text" class="input-dark input-muted" maxlength="200">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-tagline">Tagline / report subtitle</label>
+              <input id="co-tagline" type="text" class="input-dark input-muted" maxlength="300">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-address">Address</label>
+              <textarea id="co-address" class="input-dark input-muted" rows="2" maxlength="500"></textarea>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-city">City</label>
+              <input id="co-city" type="text" class="input-dark input-muted" maxlength="120">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-region">Region / state</label>
+              <input id="co-region" type="text" class="input-dark input-muted" maxlength="120">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-postal">Postal code</label>
+              <input id="co-postal" type="text" class="input-dark input-muted" maxlength="32">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-country">Country</label>
+              <input id="co-country" type="text" class="input-dark input-muted" maxlength="120">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-phone">Phone</label>
+              <input id="co-phone" type="text" class="input-dark input-muted" maxlength="80">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-email">Email</label>
+              <input id="co-email" type="email" class="input-dark input-muted" autocomplete="email" maxlength="120">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-website">Website</label>
+              <input id="co-website" type="url" class="input-dark input-muted" placeholder="https://" maxlength="500">
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="co-logo">Logo image URL</label>
+              <input id="co-logo" type="url" class="input-dark input-muted" placeholder="https://" maxlength="500">
+            </div>
+          </div>
+          <p id="settings-company-msg" class="text-xs text-gray-500 mt-3" style="min-height:1.25rem;"></p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" id="settings-company-save" class="btn btn-primary btn-sm">Save organization</button>
+            <button type="button" id="settings-company-clear" class="btn btn-ghost btn-sm">Clear</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="ollama" role="tabpanel" id="settings-panel-ollama" aria-labelledby="settings-tab-ollama" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">CrewAI</p>
+          <h1 class="settings-panel-title">Local LLM (Ollama)</h1>
+          <p class="settings-panel-desc">Point the app at your Ollama instance and model. Values here are saved in the <strong class="text-gray-400">database</strong> and override server environment defaults until you reset.</p>
+        </header>
+
+        <div id="settings-ollama-boot" data-save-url="{% url 'save_ollama_settings' %}" data-health-url="{% url 'crew_health' %}" data-models-url="/api/settings/ollama/models/" hidden></div>
+
+        <div class="card mb-4">
+          <h3 class="settings-card-title">Server defaults <span class="settings-env-pill">from env</span></h3>
+          <p class="settings-ollama-hint">Set in production with <code class="font-mono text-xs">OLLAMA_BASE_URL</code>, <code class="font-mono text-xs">OLLAMA_MODEL</code>, <code class="font-mono text-xs">CREW_RUN_TIMEOUT_SEC</code>, <code class="font-mono text-xs">CREW_ANALYSIS_ENABLED</code>.</p>
+          <div class="settings-kv-grid mt-2">
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Base URL</div>
+              <div class="settings-kv-value font-mono text-xs">{{ ollama_env.base_url }}</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Model</div>
+              <div class="settings-kv-value font-mono text-xs">{{ ollama_env.model }}</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Timeout (sec)</div>
+              <div class="settings-kv-value font-mono text-xs">{{ ollama_env.timeout_sec }}</div>
+            </div>
+            <div class="settings-kv-item">
+              <div class="settings-kv-label">Crew enabled</div>
+              <div class="settings-kv-value">{% if ollama_env.crew_enabled %}Yes{% else %}No{% endif %}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="settings-card-title">Saved overrides</h3>
+          <p class="settings-ollama-hint mb-3">Used for health checks and Crew runs from Members. Leave fields blank and save to fall back to env defaults (per field).</p>
+          <div class="grid-2 gap-3 settings-stack--tight">
+            <div class="min-w-0" style="grid-column:1/-1;">
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="ollama-base-url">Ollama base URL</label>
+              <input id="ollama-base-url" type="url" class="input-dark" placeholder="http://127.0.0.1:11434" value="{{ ollama_runtime.base_url }}" autocomplete="off">
+            </div>
+            <div class="min-w-0" style="grid-column:1/-1;">
+              <div class="flex flex-wrap items-end gap-2">
+                <div class="flex-1 min-w-0">
+                  <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="ollama-model">Model</label>
+                  <input id="ollama-model" type="text" class="input-dark" list="ollama-model-datalist" placeholder="Pick or type a model name" value="{{ ollama_runtime.model }}" autocomplete="off" spellcheck="false">
+                  <datalist id="ollama-model-datalist"></datalist>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm shrink-0 mb-px" id="ollama-refresh-models" title="List models from the Ollama server above">Refresh models</button>
+              </div>
+              <p class="settings-ollama-hint mt-1 mb-0" id="ollama-models-meta"></p>
+              <div id="ollama-models-table-wrap" class="settings-ollama-models-wrap hidden mt-2">
+                <div class="settings-ollama-models-scroll">
+                  <table class="settings-ollama-models-table" aria-label="Models reported by Ollama">
+                    <thead>
+                      <tr><th scope="col">Name</th><th scope="col">Size</th></tr>
+                    </thead>
+                    <tbody id="ollama-models-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="min-w-0" style="grid-column:1/-1;">
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="ollama-timeout">Run timeout (seconds)</label>
+              <input id="ollama-timeout" type="number" min="60" max="3600" step="30" class="input-dark max-w-xs" value="{{ ollama_runtime.timeout_sec }}">
+            </div>
+          </div>
+          {% if ollama_runtime.from_session %}
+          <p class="settings-ollama-hint mt-2 mb-0">Database overrides are active (not just env defaults).</p>
+          {% endif %}
+          <div class="flex flex-wrap gap-2 mt-4">
+            <button type="button" class="btn btn-primary btn-sm" id="ollama-save">Save overrides</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ollama-reset">Reset to env defaults</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="ollama-test">Test connection</button>
+          </div>
+          <p class="settings-ollama-hint mt-3 mb-0" id="ollama-feedback" role="status"></p>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="notifications" role="tabpanel" id="settings-panel-notifications" aria-labelledby="settings-tab-notifications" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Alerts</p>
+          <h1 class="settings-panel-title">Notifications</h1>
+          <p class="settings-panel-desc">Choose how you receive alerts, digests, and in-app notifications.</p>
+        </header>
+        <div class="card settings-list">
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Email notifications</div>
+              <div class="settings-row__hint">Summary and report digests</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Critical alerts</div>
+              <div class="settings-row__hint">Immediate notices for threshold breaches</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Browser push</div>
+              <div class="settings-row__hint">Requires permission in supported browsers</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Weekly digest</div>
+              <div class="settings-row__hint">Monday morning rollup</div>
+            </div>
+            <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="security" role="tabpanel" id="settings-panel-security" aria-labelledby="settings-tab-security" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Access</p>
+          <h1 class="settings-panel-title">Security</h1>
+          <p class="settings-panel-desc">Session length, authentication options, and access restrictions.</p>
+        </header>
+        <div class="card settings-list">
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Two-factor authentication</div>
+              <div class="settings-row__hint">Extra step at sign-in</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row settings-row--stack">
+            <div class="settings-row__text mb-2">
+              <div class="settings-row__title">Session timeout</div>
+              <div class="settings-row__hint">Auto sign-out after inactivity</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <input type="range" class="range-accent flex-1" id="session-range" min="5" max="120" value="30" aria-valuemin="5" aria-valuemax="120" aria-valuenow="30" aria-label="Session timeout minutes">
+              <span class="text-white text-sm w-20 text-right tabular-nums" id="session-val">30 min</span>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">IP allowlist</div>
+              <div class="settings-row__hint">Restrict dashboard to known networks</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row__text">
+              <div class="settings-row__title">Audit logging</div>
+              <div class="settings-row__hint">Record sensitive actions</div>
+            </div>
+            <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="api" role="tabpanel" id="settings-panel-api" aria-labelledby="settings-tab-api" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Integrations</p>
+          <h1 class="settings-panel-title">API keys</h1>
+          <p class="settings-panel-desc">Manage API credentials. For dataset exports and structured responses, use <strong class="text-gray-400">Data &amp; privacy</strong>.</p>
+        </header>
+        <div class="flex justify-end mb-3">
+          <button type="button" class="btn btn-primary btn-sm" id="settings-generate-key">Generate new key</button>
+        </div>
+        <div class="settings-api-list">
+          <div class="card settings-api-card settings-api-card--live">
+            <div class="settings-api-card__head">
+              <div>
+                <div class="text-white font-medium">Production</div>
+                <div class="settings-api-meta">Last used · 2 hours ago</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="settings-code-row">
+              <code class="settings-code" id="settings-key-live">pk_live_••••••••••••1234</code>
+              <button type="button" class="btn-settings-secondary" data-copy-target="settings-key-live">Copy</button>
+              <button type="button" class="btn-settings-danger">Revoke</button>
+            </div>
+          </div>
+          <div class="card settings-api-card settings-api-card--test">
+            <div class="settings-api-card__head">
+              <div>
+                <div class="text-white font-medium">Development</div>
+                <div class="settings-api-meta">Last used · 1 day ago</div>
+              </div>
+              <label class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="settings-code-row">
+              <code class="settings-code" id="settings-key-test">pk_test_••••••••••••5678</code>
+              <button type="button" class="btn-settings-secondary" data-copy-target="settings-key-test">Copy</button>
+              <button type="button" class="btn-settings-danger">Revoke</button>
+            </div>
+          </div>
+          <div class="card settings-api-card settings-api-card--analytics">
+            <div class="settings-api-card__head">
+              <div>
+                <div class="text-white font-medium">Analytics</div>
+                <div class="settings-api-meta">Last used · 1 week ago · disabled</div>
+              </div>
+              <label class="toggle"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="settings-code-row">
+              <code class="settings-code" id="settings-key-analytics">pk_analytics_••••••••••••9012</code>
+              <button type="button" class="btn-settings-secondary" data-copy-target="settings-key-analytics">Copy</button>
+              <button type="button" class="btn-settings-danger">Revoke</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="preferences" role="tabpanel" id="settings-panel-preferences" aria-labelledby="settings-tab-preferences" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Experience</p>
+          <h1 class="settings-panel-title">Preferences</h1>
+          <p class="settings-panel-desc">Language, timezone, date format, and color theme.</p>
+        </header>
+        <div class="card">
+          <h3 class="settings-card-title mb-2">Theme</h3>
+          <div class="settings-theme-grid" role="group" aria-label="Color theme">
+            <button type="button" class="settings-theme-option is-selected" data-theme="dark" aria-pressed="true">Dark</button>
+            <button type="button" class="settings-theme-option" data-theme="light" aria-pressed="false">Light</button>
+            <button type="button" class="settings-theme-option" data-theme="auto" aria-pressed="false">System</button>
+          </div>
+          <div class="grid-2 gap-3 mt-2">
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-lang">Language</label>
+              <select id="set-lang" class="input-dark input-muted">
+                <option selected>English</option>
+                <option>Spanish</option>
+                <option>French</option>
+                <option>German</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-tz">Timezone</label>
+              <select id="set-tz" class="input-dark input-muted">
+                <option>UTC</option>
+                <option>Eastern</option>
+                <option>Central</option>
+                <option>Pacific</option>
+              </select>
+            </div>
+            <div class="min-w-0" style="grid-column:1/-1;">
+              <label class="block text-xs text-gray-500 uppercase-track-sm mb-1" for="set-datefmt">Date format</label>
+              <select id="set-datefmt" class="input-dark input-muted">
+                <option>MM/DD/YYYY</option>
+                <option>DD/MM/YYYY</option>
+                <option>YYYY-MM-DD</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel hidden" data-panel="data" role="tabpanel" id="settings-panel-data" aria-labelledby="settings-tab-data" aria-hidden="true">
+        <header class="settings-panel-head">
+          <p class="settings-panel-kicker">Exports</p>
+          <h1 class="settings-panel-title">Data &amp; privacy</h1>
+          <p class="settings-panel-desc">Export actuarial and roster data, open the JSON API, or regenerate the mock dataset.</p>
+        </header>
+        <div class="card settings-list">
+          <div class="settings-row settings-row--data">
+            <div class="settings-row__text">
+              <span class="settings-data-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+              <div>
+                <div class="settings-row__title">Actuarial years (CSV)</div>
+                <div class="settings-row__hint">Current accident-year rows (shared dataset seed)</div>
+              </div>
+            </div>
+            <a href="{% url 'export_actuarial_csv' %}" class="btn btn-ghost btn-sm">Download</a>
+          </div>
+          <div class="settings-row settings-row--data">
+            <div class="settings-row__text">
+              <span class="settings-data-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+              <div>
+                <div class="settings-row__title">Team roster (CSV)</div>
+                <div class="settings-row__hint">Organization roster</div>
+              </div>
+            </div>
+            <a href="{% url 'export_members_csv' %}" class="btn btn-ghost btn-sm">Download</a>
+          </div>
+          <div class="settings-row settings-row--data">
+            <div class="settings-row__text">
+              <span class="settings-data-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M10 13h4"/><path d="M10 17h4"/></svg></span>
+              <div>
+                <div class="settings-row__title">JSON API</div>
+                <div class="settings-row__hint">Years + meta (new tab)</div>
+              </div>
+            </div>
+            <a href="{% url 'actuarial_json' %}" class="btn btn-ghost btn-sm" target="_blank" rel="noopener noreferrer">Open</a>
+          </div>
+          <div class="settings-row settings-row--data">
+            <div class="settings-row__text">
+              <span class="settings-data-icon" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg></span>
+              <div>
+                <div class="settings-row__title">Regenerate actuarial data</div>
+                <div class="settings-row__hint">New random dataset seed (saved in database)</div>
+              </div>
+            </div>
+            <form method="post" action="{% url 'regenerate_actuarial_data' %}" class="page-actions__form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn btn-primary btn-sm">Regenerate</button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'actuarial/js/settings.js' %}"></script>
+{% endblock %}

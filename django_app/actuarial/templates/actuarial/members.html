@@ -1,0 +1,170 @@
+{% extends "actuarial/base.html" %}
+{% load static actuarial_extras %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-scroll scrollbar-hide" style="background:#2a2b2d;">
+  <div class="p-8 space-y-6">
+    {% include "actuarial/includes/page_actions_members.html" %}
+
+    <details class="card" style="padding:1.25rem 1.5rem;">
+      <summary class="text-white cursor-pointer" style="cursor:pointer;list-style:none;font-weight:500;">How Crew configuration works</summary>
+      <div class="mt-3 text-sm text-gray-400 space-y-2" style="line-height:1.5;">
+        <p class="mb-0"><strong class="text-gray-300">Crew agents</strong> — Each card is one sequential step in the run. Click <em>Edit</em> to set <strong>role</strong>, <strong>goal</strong>, and <strong>backstory</strong> (used directly by CrewAI), optional <strong>display label</strong>, <strong>department</strong>, <strong>step type</strong> (task template), and optional <strong>Ollama model</strong> (empty = default from Settings → Local LLM). Add or remove agents within the limits below.</p>
+        <p class="mb-0"><strong class="text-gray-300">Runs &amp; instructions</strong> — Whole-run instructions, streaming output, past runs, approval, and PDF live on <a href="{% url 'crew_runs' %}" class="text-cyan-300 underline">Crew runs</a>. This page only configures the agent pipeline.</p>
+        <p class="mb-0"><strong class="text-gray-300">Saved configuration</strong> — Pipeline and crew instructions are stored in the <strong class="text-gray-400">database</strong> (shared for this app). Configure Ollama under <strong class="text-gray-400">Settings → Local LLM</strong>. See <a href="{% url 'ai_integrations' %}" class="text-cyan-300 underline">AI integrations</a> for a hub of related screens.</p>
+        <p class="mb-0 text-gray-500 text-xs">Nothing is sent to a cloud LLM unless you run Ollama locally.</p>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button type="button" id="reset-all-personalization" class="btn btn-ghost btn-sm">Reset crew &amp; crew instructions</button>
+        </div>
+      </div>
+    </details>
+
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <h1 class="text-2xl font-light text-white mb-2">Crew agents</h1>
+        <p class="text-sm text-gray-500 mb-0"><span id="member-count">{{ crew_display|length }}</span> agent{{ crew_display|length|pluralize }} (min {{ crew_pipeline_min }}, max {{ crew_pipeline_max }}) · order = run order</p>
+      </div>
+      <div class="flex flex-wrap gap-2 items-center">
+        <button type="button" id="crew-add-agent" class="btn btn-primary btn-sm">Add agent</button>
+        <button type="button" id="crew-reset-pipeline" class="btn btn-ghost btn-sm">Reset to defaults</button>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap mb-4">
+      <div class="flex-1 input-with-icon" style="min-width:200px;">
+        <svg class="icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" id="member-search" class="input-dark" placeholder="Search role, label, department…" autocomplete="off">
+      </div>
+      <div class="flex items-center gap-2">
+        <svg width="16" height="16" class="text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+        <select id="member-dept" class="input-dark" style="width:auto;min-width:180px;">
+          <option value="all">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d }}">{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {{ crew_pipeline|json_script:"crew-pipeline-data" }}
+    <div
+      id="crew-personalization-boot"
+      data-pipeline-url="{% url 'crew_pipeline_api' %}"
+      data-reset-url="{% url 'reset_team_personalization' %}"
+      data-models-url="{% url 'ollama_models_list' %}"
+      data-pipeline-min="{{ crew_pipeline_min }}"
+      data-pipeline-max="{{ crew_pipeline_max }}"
+      hidden
+    ></div>
+
+    <div id="members-grid" class="members-grid">
+      {% for a in crew_display %}
+      <div class="member-card crew-agent-card" data-name="{{ a.display_label|lower }} {{ a.role|lower }} {{ a.department|default:''|lower }}" data-dept="{{ a.department|default:'' }}" data-agent-id="{{ a.id }}">
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex items-start gap-4">
+            <div class="relative">
+              <div class="avatar-box">{{ a.avatar|default:"—" }}</div>
+            </div>
+            <div>
+              <h3 class="text-lg text-white font-medium mb-0">{{ a.display_label }}</h3>
+              <p class="text-sm text-gray-400 mb-0">{{ a.role|truncatechars:72 }}</p>
+              <p class="text-xs mb-0 mt-1" style="color:#2ac8eb;">Step: {{ a.step_kind }} · order {{ forloop.counter }}</p>
+            </div>
+          </div>
+          <div class="flex flex-col gap-1 items-end">
+            <button type="button" class="btn btn-ghost btn-sm crew-edit-btn" data-agent-id="{{ a.id }}">Edit</button>
+            <button type="button" class="btn btn-ghost btn-sm text-red-400 crew-delete-btn" data-agent-id="{{ a.id }}" {% if crew_display|length <= crew_pipeline_min %}disabled title="Minimum agents reached"{% endif %}>Delete</button>
+          </div>
+        </div>
+        <div class="space-y-2 mb-3">
+          <div class="flex items-center text-xs text-gray-400">
+            <svg class="mr-2" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+            {{ a.department|default:"—" }}
+          </div>
+          {% if a.ollama_model %}
+          <p class="text-xs text-gray-500 mb-0 font-mono">Model: {{ a.ollama_model }}</p>
+          {% else %}
+          <p class="text-xs text-gray-500 mb-0">Model: <em class="text-gray-400">workspace default</em></p>
+          {% endif %}
+        </div>
+        <p class="text-xs text-gray-500 mb-0" style="line-height:1.4;max-height:4.5em;overflow:hidden;">{{ a.goal|truncatechars:140 }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+  <div id="crew-agent-modal" class="member-modal-overlay crew-agent-modal-overlay hidden" aria-hidden="true">
+    <div class="member-modal-dialog card crew-agent-modal-dialog" role="dialog" aria-labelledby="crew-agent-edit-title">
+      <div class="flex justify-between items-start mb-3">
+        <h2 id="crew-agent-edit-title" class="text-lg text-white" style="margin:0;">Edit agent</h2>
+        <button type="button" id="crew-agent-edit-close" class="btn btn-ghost btn-sm" aria-label="Close">×</button>
+      </div>
+      <p class="text-xs text-gray-500 mb-3">Role, goal, and backstory are passed to CrewAI. Step type selects the task template. Empty model uses Settings → Local LLM default.</p>
+      <form id="crew-agent-edit-form" class="space-y-3">
+        <input type="hidden" id="crew-edit-id" value="">
+        <div>
+          <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-step-kind">Step type (task template)</label>
+          <select id="crew-edit-step-kind" class="input-dark" style="width:100%;">
+            {% for kind, lab, sub in crew_step_kinds %}
+            <option value="{{ kind }}">{{ lab }} — {{ sub }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="grid-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-label">Display label (optional)</label>
+            <input type="text" id="crew-edit-label" class="input-dark" maxlength="80" autocomplete="off" placeholder="Short card title">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-avatar">Avatar (initials)</label>
+            <input type="text" id="crew-edit-avatar" class="input-dark" maxlength="3" autocomplete="off">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-role">Agent role (CrewAI)</label>
+          <input type="text" id="crew-edit-role" class="input-dark" maxlength="200" autocomplete="off" required>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-goal">Goal</label>
+          <textarea id="crew-edit-goal" class="input-dark" rows="2" style="width:100%;resize:vertical;" maxlength="1200" required></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-backstory">Backstory</label>
+          <textarea id="crew-edit-backstory" class="input-dark" rows="4" style="width:100%;resize:vertical;" maxlength="4000"></textarea>
+        </div>
+        <div class="grid-2 gap-3">
+          <div>
+            <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-department">Department</label>
+            <input type="text" id="crew-edit-department" class="input-dark" maxlength="80" autocomplete="off">
+          </div>
+          <div>
+            <label class="text-xs text-gray-500 uppercase-track-sm" for="crew-edit-model">Ollama model (optional)</label>
+            <input type="text" id="crew-edit-model" class="input-dark font-mono text-sm" maxlength="120" list="crew-ollama-models" placeholder="e.g. llama3.2" autocomplete="off">
+            <datalist id="crew-ollama-models"></datalist>
+          </div>
+        </div>
+        <div class="crew-agent-modal-actions">
+          <button type="button" class="btn btn-ghost btn-sm" id="crew-agent-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save agent</button>
+        </div>
+      </form>
+    </div>
+  </div>
+<style>
+.status-active{background:#4ade80;}
+.status-busy{background:#fb923c;}
+.status-in-meeting{background:#a855f7;}
+.status-offline{background:#9ca3af;}
+.cursor-pointer{cursor:pointer;}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'actuarial/js/members.js' %}"></script>
+<script src="{% static 'actuarial/js/crew_agents_config.js' %}"></script>
+{% endblock %}

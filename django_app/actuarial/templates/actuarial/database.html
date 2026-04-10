@@ -1,0 +1,179 @@
+{% extends "actuarial/base.html" %}
+{% load static humanize actuarial_extras %}
+
+{% block content %}
+<div class="page-scroll scrollbar-hide" style="background:#2a2b2d;">
+  <div class="p-8 space-y-6">
+    {% include "actuarial/includes/page_actions_actuarial.html" %}
+    <div class="flex justify-between items-center flex-wrap gap-3">
+      <div>
+        <h1 class="text-2xl font-light text-white mb-2">Actuarial Database</h1>
+        <p class="text-sm text-gray-500">{{ data|length }} records | Last synced: <span id="db-sync-time"></span></p>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap">
+        <button type="button" id="db-btn-import" class="btn btn-ghost btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import
+        </button>
+        <a href="{% url 'export_actuarial_csv' %}" class="btn btn-ghost btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export
+        </a>
+        <form method="post" action="{% url 'regenerate_actuarial_data' %}" class="page-actions__form">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+            Refresh data
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="grid-4 gap-3">
+      <div class="card" style="padding:1rem;">
+        <div class="flex justify-between mb-2">
+          <svg width="20" height="20" class="text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
+          <span class="text-xs text-gray-500">Total Records</span>
+        </div>
+        <div class="text-2xl text-white">{{ total_records|intcomma }}</div>
+      </div>
+      <div class="card" style="padding:1rem;">
+        <div class="flex justify-between mb-2">
+          <svg width="20" height="20" class="text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><rect x="4" y="8" width="4" height="13"/><rect x="16" y="13" width="4" height="8"/><rect x="10" y="5" width="4" height="16"/></svg>
+          <span class="text-xs text-gray-500">Total Premium</span>
+        </div>
+        <div class="text-2xl text-white">${{ total_premium|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="card" style="padding:1rem;">
+        <div class="flex justify-between mb-2">
+          <svg width="20" height="20" class="text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21 16-4 4-4-4"/><path d="M17 8v13"/><path d="M3 12h.01"/><path d="M7 12h10"/><path d="M11 12h2"/></svg>
+          <span class="text-xs text-gray-500">Total Incurred</span>
+        </div>
+        <div class="text-2xl text-white">${{ total_incurred|floatformat:0|intcomma }}</div>
+      </div>
+      <div class="card" style="padding:1rem;">
+        <div class="flex justify-between mb-2">
+          <svg width="20" height="20" class="text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span class="text-xs text-gray-500">Avg Loss Ratio</span>
+        </div>
+        <div class="text-2xl" style="color:#2ac8eb;">{{ avg_loss_ratio_pct|floatformat:2 }}%</div>
+      </div>
+    </div>
+
+    <form method="get" class="flex items-center gap-2 flex-wrap" id="db-controls">
+      <input type="hidden" name="sort" value="{{ sort_field }}">
+      <input type="hidden" name="dir" value="{{ sort_dir }}">
+      <div class="flex-1 input-with-icon" style="min-width:200px;">
+        <svg class="icon-left" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="search" name="q" value="{{ search_q }}" class="input-dark" placeholder="Search by year, claims, or trend...">
+      </div>
+      <div class="view-toggle">
+        <button type="button" id="db-view-table" class="active" aria-label="Table"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18"/><rect x="4" y="8" width="4" height="13"/><rect x="16" y="13" width="4" height="8"/><rect x="10" y="5" width="4" height="16"/></svg></button>
+        <button type="button" id="db-view-cards" aria-label="Cards"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg></button>
+      </div>
+      <div id="db-selected-bar" class="flex items-center gap-2" style="display:none;">
+        <span class="text-sm text-gray-400"><span id="db-sel-count">0</span> selected</span>
+        <button type="button" class="text-red p-2" style="background:none;border:none;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button>
+        <button type="button" class="p-2" style="color:#2ac8eb;background:none;border:none;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </div>
+    </form>
+
+    <div id="db-table-wrap">
+      <div class="card-flat overflow-hidden">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="w-12">
+                <input type="checkbox" id="db-check-all" class="rounded border-gray-600" style="width:16px;height:16px;">
+              </th>
+              <th><a class="sort-link text-gray-400" href="?sort=accident_year&dir={% if sort_field == 'accident_year' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Accident Year{% if sort_field == 'accident_year' %} ↕{% endif %}</a></th>
+              <th><a class="sort-link text-gray-400" href="?sort=reported_claims&dir={% if sort_field == 'reported_claims' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Reported Claims{% if sort_field == 'reported_claims' %} ↕{% endif %}</a></th>
+              <th><a class="sort-link text-gray-400" href="?sort=paid_losses&dir={% if sort_field == 'paid_losses' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Paid Losses{% if sort_field == 'paid_losses' %} ↕{% endif %}</a></th>
+              <th><a class="sort-link text-gray-400" href="?sort=incurred_losses&dir={% if sort_field == 'incurred_losses' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Incurred Losses{% if sort_field == 'incurred_losses' %} ↕{% endif %}</a></th>
+              <th><a class="sort-link text-gray-400" href="?sort=earned_premium&dir={% if sort_field == 'earned_premium' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Earned Premium{% if sort_field == 'earned_premium' %} ↕{% endif %}</a></th>
+              <th><a class="sort-link text-gray-400" href="?sort=loss_ratio&dir={% if sort_field == 'loss_ratio' and sort_dir == 'asc' %}desc{% else %}asc{% endif %}{% if search_q %}&q={{ search_q|urlencode }}{% endif %}">Loss Ratio{% if sort_field == 'loss_ratio' %} ↕{% endif %}</a></th>
+              <th>Trend</th>
+              <th>Risk Score</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in data %}
+            <tr data-row-id="{{ item.id }}" class="db-row">
+              <td>
+                <input type="checkbox" class="db-row-check rounded border-gray-600" style="width:16px;height:16px;" data-id="{{ item.id }}">
+              </td>
+              <td class="text-white font-medium">{{ item.accident_year }}</td>
+              <td>{{ item.reported_claims|intcomma }}</td>
+              <td>${{ item.paid_losses|floatformat:0|intcomma }}</td>
+              <td class="text-white">${{ item.incurred_losses|floatformat:0|intcomma }}</td>
+              <td>${{ item.earned_premium|floatformat:0|intcomma }}</td>
+              <td>
+                <span class="font-medium {% if item.loss_ratio > 0.7 %}text-red{% elif item.loss_ratio < 0.6 %}text-green{% else %}text-orange{% endif %}">{{ item.loss_ratio|mul:100|floatformat:2 }}%</span>
+              </td>
+              <td>
+                <span class="text-lg {% if item.trend == 'up' %}text-red{% elif item.trend == 'down' %}text-green{% else %}text-gray-400{% endif %}">
+                  {% if item.trend == 'up' %}↑{% elif item.trend == 'down' %}↓{% else %}→{% endif %}
+                </span>
+              </td>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="h-15 rounded-full overflow-hidden" style="width:96px;background:#374151;">
+                    <div class="h-full rounded-full" style="width:{{ item.risk_score|min100 }}%;background:{% if item.risk_score > 70 %}#f87171{% elif item.risk_score > 50 %}#fb923c{% else %}#4ade80{% endif %};"></div>
+                  </div>
+                  <span class="text-sm text-gray-300">{{ item.risk_score|floatformat:1 }}</span>
+                </div>
+              </td>
+              <td><button type="button" class="text-gray-500" style="background:none;border:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg></button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="db-cards-wrap" class="hidden grid-2 gap-3">
+      {% for item in data %}
+      <div class="card db-card" data-row-id="{{ item.id }}">
+        <div class="flex justify-between mb-4">
+          <h3 class="text-xl text-white font-medium">Accident Year {{ item.accident_year }}</h3>
+          <span class="text-2xl {% if item.trend == 'up' %}text-red{% elif item.trend == 'down' %}text-green{% else %}text-gray-400{% endif %}">{% if item.trend == 'up' %}↑{% elif item.trend == 'down' %}↓{% else %}→{% endif %}</span>
+        </div>
+        <div class="grid-2 gap-4">
+          <div>
+            <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Claims</div>
+            <div class="text-lg text-white">{{ item.reported_claims|intcomma }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Loss Ratio</div>
+            <div class="text-lg {% if item.loss_ratio > 0.7 %}text-red{% else %}text-green{% endif %}">{{ item.loss_ratio|mul:100|floatformat:2 }}%</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Incurred</div>
+            <div class="text-lg text-white">${{ item.incurred_losses|floatformat:0|intcomma }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Premium</div>
+            <div class="text-lg text-gray-300">${{ item.earned_premium|floatformat:0|intcomma }}</div>
+          </div>
+        </div>
+        <div class="mt-4 pt-4" style="border-top:1px solid rgba(55,65,81,0.3);">
+          <div class="flex justify-between">
+            <span class="text-xs text-gray-500">Risk Score</span>
+            <span class="text-sm {% if item.risk_score > 70 %}text-red{% elif item.risk_score > 50 %}text-orange{% else %}text-green{% endif %}">{{ item.risk_score|floatformat:1 }}</span>
+          </div>
+          <div class="mt-2 h-15 rounded-full overflow-hidden" style="background:#374151;">
+            <div class="h-full rounded-full" style="width:{{ item.risk_score|min100 }}%;background:{% if item.risk_score > 70 %}#f87171{% elif item.risk_score > 50 %}#fb923c{% else %}#4ade80{% endif %};"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'actuarial/js/database.js' %}"></script>
+{% endblock %}

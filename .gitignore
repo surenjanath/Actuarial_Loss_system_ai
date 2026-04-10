@@ -1,0 +1,17 @@
+django_app/venv/
+django_app/.env
+django_app/db.sqlite3
+django_app/media/
+
+
+React/
+React/node_modules/
+React/dist/
+React/build/
+React/public/
+React/src/
+React/vite.config.ts
+React/tsconfig.json
+React/package.json
+React/package-lock.json
+React/package-lock.json

@@ -1,0 +1,42 @@
+{% extends "actuarial/base.html" %}
+
+{% block title %}AI integrations | Actuarial Loss Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-scroll scrollbar-hide" style="background:#2a2b2d;">
+  <div class="p-8 space-y-6 max-w-4xl">
+    <div>
+      <h1 class="text-2xl font-light text-white mb-2">AI integrations</h1>
+      <p class="text-sm text-gray-500 mb-0">Local CrewAI + Ollama wiring and organization context. Nothing is sent to a cloud LLM unless you route traffic there yourself.</p>
+    </div>
+
+    <div class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
+      <a href="{% url 'crew_runs' %}" class="card" style="padding:1.25rem 1.5rem;text-decoration:none;display:block;border:1px solid rgba(55,65,81,0.6);transition:border-color 0.15s;">
+        <h2 class="text-base text-white mb-2" style="margin:0;">Crew runs</h2>
+        <p class="text-xs text-gray-500 mb-0">Execute the pipeline, stream output, past runs, approval, PDF export.</p>
+      </a>
+      <a href="{% url 'members' %}" class="card" style="padding:1.25rem 1.5rem;text-decoration:none;display:block;border:1px solid rgba(55,65,81,0.6);">
+        <h2 class="text-base text-white mb-2" style="margin:0;">Members — agent pipeline</h2>
+        <p class="text-xs text-gray-500 mb-0">Edit step order, roles, goals, models per agent.</p>
+      </a>
+      <a href="{% url 'settings' %}" class="card" style="padding:1.25rem 1.5rem;text-decoration:none;display:block;border:1px solid rgba(55,65,81,0.6);">
+        <h2 class="text-base text-white mb-2" style="margin:0;">Settings → Local LLM</h2>
+        <p class="text-xs text-gray-500 mb-0">Session Ollama URL, model, timeout (overrides env).</p>
+      </a>
+      <a href="{% url 'settings' %}" class="card" style="padding:1.25rem 1.5rem;text-decoration:none;display:block;border:1px solid rgba(55,65,81,0.6);">
+        <h2 class="text-base text-white mb-2" style="margin:0;">Settings → Organization</h2>
+        <p class="text-xs text-gray-500 mb-0">Company letterhead fields for reports (database).</p>
+      </a>
+    </div>
+
+    <div class="card" style="padding:1.25rem 1.5rem;">
+      <h3 class="text-sm uppercase-track-sm text-gray-400 mb-2">Environment defaults</h3>
+      <dl class="text-sm text-gray-400 space-y-1" style="display:grid;grid-template-columns:auto 1fr;gap:0.25rem 1.5rem;">
+        <dt class="text-gray-500">OLLAMA_BASE_URL</dt><dd class="font-mono text-xs">{{ ollama_env.base_url }}</dd>
+        <dt class="text-gray-500">OLLAMA_MODEL</dt><dd class="font-mono text-xs">{{ ollama_env.model }}</dd>
+        <dt class="text-gray-500">CREW_ANALYSIS_ENABLED</dt><dd>{% if crew_analysis_enabled %}true{% else %}false{% endif %}</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,162 @@
+{# Requires: crew_analysis_enabled, crew_display, crew_global_instructions, default_crew_brief, team_members, crew_pipeline_min, crew_pipeline_max #}
+<div
+  id="crew-analysis-panel"
+  class="card"
+  style="padding:1.25rem 1.5rem;"
+  data-enabled="{{ crew_analysis_enabled|yesno:'true,false' }}"
+  data-stream-url="{% url 'crew_stream' %}"
+  data-health-url="{% url 'crew_health' %}"
+  data-save-instructions-url="{% url 'save_crew_instructions' %}"
+  data-pipeline-url="{% url 'crew_pipeline_api' %}"
+  data-pipeline-min="{{ crew_pipeline_min }}"
+  data-pipeline-max="{{ crew_pipeline_max }}"
+  data-run-latest-url="{% url 'crew_run_latest' %}"
+  data-run-list-url="{% url 'crew_run_list' %}"
+>
+  <div class="flex justify-between items-start flex-wrap gap-3 mb-3">
+    <div>
+      <h2 class="text-lg font-medium text-white mb-1" style="margin:0;">Agent analysis (CrewAI + Ollama)</h2>
+      <p class="text-sm text-gray-500 mb-0">Multi-agent review of the live book, producing a <strong class="text-gray-400">streaming board report</strong> for real leadership use (same run feeds the board-pack draft and audited output). Runs locally via Ollama (GET stream).</p>
+    </div>
+    <span id="crew-status-pill" class="px-3 py-1 rounded text-xs" style="background:rgba(55,65,81,0.6);color:#9ca3af;">Idle</span>
+  </div>
+  <div class="mb-3">
+    <label for="crew-global-instructions" class="text-xs text-gray-500 uppercase-track-sm">Instructions for the whole crew (saved)</label>
+    <textarea id="crew-global-instructions" class="input-dark" rows="6" style="width:100%;min-height:120px;resize:vertical;" placeholder="e.g. live board report + committee audience, treat cohort as production data, tone, must-cover topics, what directors must decide…">{% firstof crew_global_instructions default_crew_brief %}</textarea>
+  </div>
+  <div class="flex flex-wrap gap-2 items-end mb-3">
+    <div class="flex-1" style="min-width:220px;">
+      <label for="crew-topic" class="text-xs text-gray-500 uppercase-track-sm">Optional focus</label>
+      <input type="text" id="crew-topic" class="input-dark" placeholder="e.g. reserve adequacy, worst years…" autocomplete="off">
+    </div>
+    <div style="min-width:200px;">
+      <label for="crew-member-focus" class="text-xs text-gray-500 uppercase-track-sm">Learning scope (optional)</label>
+      <select id="crew-member-focus" class="input-dark" style="width:100%;">
+        <option value="">Session-wide (no member id)</option>
+        {% for m in team_members %}
+        <option value="{{ m.id }}">{{ m.name }} — {{ m.id }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="button" id="crew-start" class="btn btn-primary btn-sm">Start analysis</button>
+    <button type="button" id="crew-stop" class="btn btn-ghost btn-sm" disabled>Stop</button>
+  </div>
+  <p id="crew-health-msg" class="text-xs text-gray-500 mb-2"></p>
+
+  <div id="crew-past-runs-wrap" class="mb-3" style="padding:0.75rem 1rem;border-radius:8px;border:1px solid rgba(55,65,81,0.5);background:rgba(17,24,39,0.35);">
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+      <span class="text-xs uppercase-track-sm text-gray-400">Past runs</span>
+      <button type="button" id="crew-past-runs-refresh" class="btn btn-ghost btn-sm">Refresh list</button>
+    </div>
+        <p class="text-xs text-gray-500 mb-2">Runs are stored in the database (shared workspace). Click a row to load the audited report and approve or download PDF. Use <strong class="text-gray-400">×</strong> to delete a run permanently.</p>
+    <div id="crew-past-runs-list" class="text-sm scrollbar-hide" style="max-height:280px;overflow:auto;"></div>
+  </div>
+
+  <div id="crew-board-report-wrap" class="crew-board-report-wrap hidden mb-3" style="padding:1rem 1.1rem;border-radius:8px;border:1px solid rgba(42,200,235,0.35);background:rgba(17,24,39,0.5);">
+    <div class="flex flex-wrap justify-between items-start gap-2 mb-2">
+      <div>
+        <div class="text-xs uppercase-track-sm" style="color:#2ac8eb;">Board report (live)</div>
+        <p id="crew-board-report-live-label" class="text-xs text-gray-500 mb-0 mt-1">Leadership-facing draft while <strong class="text-gray-400">initial report</strong>, <strong class="text-gray-400">executive</strong>, <strong class="text-gray-400">revision</strong>, or <strong class="text-gray-400">audited report</strong> steps stream (each pass replaces the panel until the next board-stage step).</p>
+      </div>
+      <a id="crew-board-open" class="btn btn-ghost btn-sm hidden" href="#" target="_blank" rel="noopener noreferrer">Open board display</a>
+    </div>
+    <div id="crew-board-report-live" class="text-sm text-gray-100 scrollbar-hide" style="white-space:pre-wrap;max-height:280px;overflow:auto;line-height:1.45;min-height:4rem;"></div>
+  </div>
+
+  <div id="crew-workflow-handoff-wrap" class="hidden mb-3" style="padding:0.85rem 1rem;border-radius:8px;border:1px solid rgba(251,191,36,0.35);background:rgba(251,191,36,0.06);">
+    <div class="text-xs uppercase-track-sm mb-1" style="color:#fbbf24;">Workflow handoff</div>
+    <p id="crew-workflow-handoff-msg" class="text-sm text-gray-200 mb-2" style="margin:0;"></p>
+    <pre id="crew-workflow-handoff-snippet" class="text-xs text-gray-400 scrollbar-hide mb-2" style="white-space:pre-wrap;max-height:160px;overflow:auto;margin:0;"></pre>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" id="crew-workflow-prefill-topic" class="btn btn-ghost btn-sm">Prefill optional focus</button>
+    </div>
+  </div>
+
+  <div id="crew-viz-wrap" class="crew-viz-wrap hidden mb-3" aria-live="polite">
+    <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+      <span class="text-xs text-gray-500 uppercase-track-sm">Crew pipeline</span>
+      <span class="text-xs text-gray-600 font-mono" id="crew-run-meta">
+        <span id="crew-elapsed">0:00</span>
+        <span class="text-gray-600 mx-1">·</span>
+        <span id="crew-board-model"></span>
+      </span>
+    </div>
+    <div class="crew-org-rows" id="crew-org-rows">
+      <div class="crew-org-section">
+        <span class="crew-org-section-kicker">Run order (matches pipeline on Members)</span>
+        <div class="crew-org-pipeline crew-org-pipeline--dynamic" role="list" aria-label="Crew task order">
+          {% for a in crew_display %}
+          {% if not forloop.first %}
+          <div class="crew-org-edge" aria-hidden="true"><span class="crew-org-edge-line"></span></div>
+          {% endif %}
+          <div class="crew-org-node {% if a.step_kind == 'ceo' %}crew-org-node--ceo{% endif %}" data-task-idx="{{ forloop.counter0 }}" role="listitem" id="crew-node-{{ forloop.counter0 }}">
+            <div class="crew-org-node-inner">
+              {% if a.step_kind == 'ceo' %}
+              <span class="crew-org-badge-top" aria-hidden="true">Human OK</span>
+              {% endif %}
+              <span class="crew-org-step">{{ forloop.counter }}</span>
+              <span class="crew-org-label">{{ a.display_label }}</span>
+              <span class="crew-org-role">{{ a.step_subtitle }}</span>
+              <span class="crew-org-state" data-field="state">—</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div id="crew-live-docs" class="crew-live-docs hidden mt-4">
+      <div class="text-xs text-gray-500 uppercase-track-sm mb-2">Live documents</div>
+      <div class="crew-live-doc-unified-wrap mb-3">
+        <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Full transcript (all tasks in one scroll)</div>
+        <div id="crew-live-doc-unified" class="crew-live-doc-unified scrollbar-hide" aria-label="Combined crew output"></div>
+      </div>
+      <div class="text-xs text-gray-500 uppercase-track-sm mb-2">By role (same content, split for review)</div>
+      <div class="crew-live-docs-grid">
+        {% for a in crew_display %}
+        <article class="crew-doc-card {% if a.step_kind == 'ceo' %}crew-doc-card--ceo{% elif a.step_kind == 'final_report' %}crew-doc-card--final{% elif a.step_kind == 'initial_report' %}crew-doc-card--final{% elif a.step_kind == 'manager' or a.step_kind == 'audit' or a.step_kind == 'revision' or a.step_kind == 'coach' %}crew-doc-card--review{% endif %}" data-task-idx="{{ forloop.counter0 }}">
+          <header class="crew-doc-card-head">
+            <span class="crew-doc-card-title">{{ a.display_label }}</span>
+            <span class="crew-doc-card-badge" data-field="badge">—</span>
+            <span class="crew-ts crew-doc-ts" data-field="ts"></span>
+          </header>
+          <div class="crew-doc-body scrollbar-hide" data-field="doc"></div>
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="crew-activity-toolbar mt-4">
+      <span class="text-xs text-gray-500 uppercase-track-sm">Activity</span>
+      <div class="crew-activity-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="crew-log-copy" disabled>Copy log</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="crew-log-download" disabled>Download .txt</button>
+      </div>
+    </div>
+    <div id="crew-activity-log" class="crew-activity-log scrollbar-hide" aria-live="polite"></div>
+
+    <details class="crew-raw-details mt-3">
+      <summary class="text-xs text-gray-500 cursor-pointer">Raw stream log</summary>
+      <div id="crew-log" class="scrollbar-hide crew-raw-log mt-2"></div>
+    </details>
+  </div>
+  <div id="crew-audited-wrap" class="crew-audited-wrap hidden mt-3 pt-3" style="border-top:1px solid rgba(42,200,235,0.25);">
+    <div id="crew-review-banner" class="hidden mb-3" style="padding:0.65rem 0.85rem;border-radius:6px;border:1px solid rgba(251,191,36,0.4);background:rgba(251,191,36,0.08);">
+      <p class="text-sm text-gray-200 mb-0"><strong class="text-amber-200">Review before approving</strong> — Read the audited report below. Address any workflow handoff notes, adjust crew instructions or optional focus if needed, then approve. To try again instead, scroll to <a href="#crew-topic" class="text-cyan-300 underline">Optional focus</a> and start a new run.</p>
+    </div>
+    <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
+      <div class="text-xs uppercase-track-sm" style="color:#2ac8eb;">Audited report</div>
+      <span id="crew-approval-pill" class="px-2 py-0.5 rounded text-xs" style="background:rgba(55,65,81,0.6);color:#9ca3af;">—</span>
+    </div>
+    <div id="crew-audited-report" class="crew-audited-report text-sm text-gray-200 scrollbar-hide" style="white-space:pre-wrap;max-height:320px;overflow:auto;"></div>
+    <div class="flex flex-wrap gap-2 mt-2 items-center">
+      <button type="button" id="crew-approve-btn" class="btn btn-primary btn-sm" disabled>Approve report</button>
+      <a id="crew-pdf-download" class="btn btn-ghost btn-sm hidden" href="#" download>Download PDF</a>
+      <span id="crew-approval-msg" class="text-xs text-gray-500"></span>
+    </div>
+  </div>
+  <div class="mt-3 pt-3" style="border-top:1px solid rgba(55,65,81,0.3);">
+    <div class="text-xs text-gray-500 uppercase-track-sm mb-1">Crew chain summary (raw)</div>
+    <div id="crew-summary" class="text-sm text-gray-300" style="white-space:pre-wrap;"></div>
+  </div>
+</div>
